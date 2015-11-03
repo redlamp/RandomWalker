@@ -5,21 +5,31 @@ var WalkerMain = function () {
     this.startX = Math.floor(c.width / 2);
     this.startY = Math.floor(c.height / 2);
     
-    this.walkerCount = 10;
+    this.walkerCount = 250;
     this.stepDistance = 6;
     this.lineWidth = 4;
     
     this.walkers = createWalkers(walkerCount);
     this.activeWalkers = walkers.slice();
     
-    this.play = false;
-    this.playToggle();
+    this.play = true;
+    draw();
 };
 
 var draw = function() {
-    console.log("draw()");
+//    console.log("draw()");
+
+    ctx.clearRect(0, 0, c.width/2, c.height/2);
     
-//    ctx.clearRect(0,0,640,640);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(c.width/2, 0);
+    ctx.lineTo(c.width/2, c.height/2);
+    ctx.lineTo(0, c.height/2);
+    ctx.closePath();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(0, 0, 0, .01)";
+    ctx.stroke();
     
     var i = activeWalkers.length-1;
     while (i >= 0) {
@@ -27,6 +37,7 @@ var draw = function() {
         w.step();
         w.drawStep();
         if(!w.active) {
+            console.log("id "+w.id+" removed.\t\tRemaining: "+activeWalkers.length);
             activeWalkers.splice(i,1);
         }
         i--;
@@ -60,13 +71,12 @@ var Walker = function (id) {
     var xPos = yPos = lastDrawnStep = 0;
     this.steps = [new Point()];
     this.active = true;
-    this.activeColor = "rgba(255, 0, 255, 0.005)";
-    this.completeColor = "rgba(102, 17, 102, 0.005)";
+    this.activeColor = "rgba(255, 250, 250, 0.1)";
+    this.completeColor = "rgba(102, 17, 102, 0.05)";
 };
 
 Walker.prototype.step = function() {
 //    console.log(this.id+": step()");
-    
     var dirs = [0, 1, 2, 3];
     var ban = [];
     
@@ -77,26 +87,23 @@ Walker.prototype.step = function() {
         // Prevent vert backstep
         if (beg.y < end.y)                  ban.push(0);
         else if (beg.y > end.y)             ban.push(2);
-
         // Prevent hor backstep
         if (beg.x < end.x)                  ban.push(3);
         else if (beg.x > end.x)             ban.push(1)
     }
-    
     // enforce low bounds
     if(this.stepAsX(-1) - stepDistance <= 0)       ban.push(3);
     if(this.stepAsY(-1) - stepDistance <= 0)       ban.push(0);
-    
     // enforce high bounds
     if(this.stepAsX(-1) + stepDistance >= c.width) ban.push(1);
     if(this.stepAsY(-1) + stepDistance >= c.height)ban.push(2);
     
-    console.log("dirs pre ban:  "+dirs);
-    console.log("ban list:      "+ban);
+//    console.log("dirs pre ban:  "+dirs);
+//    console.log("ban list:      "+ban);
     dirs = dirs.filter( function (e) {
         return ban.indexOf(e) < 0;
     })
-    console.log("dirs post ban: "+dirs);
+//    console.log("dirs post ban: "+dirs);
     
     var dir = this.lastDir = dirs[Math.floor(Math.random()*dirs.length)];
     var p = this.getStep().clone();
@@ -133,13 +140,13 @@ Walker.prototype.getStep = function (step) {
 }
 
 Walker.prototype.stepAsX = function (step) {
-    s = this.getStep(step);
-    return startX + s.x * stepDistance;
+    var p = this.getStep(step);
+    return startX + stepDistance * p.x;
 }
 
 Walker.prototype.stepAsY = function (step) {
-    s = this.getStep(step);
-    return startY + s.y * stepDistance;
+    var p = this.getStep(step);
+    return startY + stepDistance * p.y;
 }
 
 Walker.prototype.drawStep = function (step) {
@@ -147,18 +154,13 @@ Walker.prototype.drawStep = function (step) {
     s = step || this.steps.length - 1;
     var x, y;
     
-    x = this.stepAsX(s-1);
-    y = this.stepAsY(s-1);
-    ctx.moveTo(x, y);
-    
-    x = this.stepAsX(s);
-    y = this.stepAsY(s);
-    ctx.lineTo(x, y);
-    
+    ctx.beginPath()
     ctx.lineCap = "square";
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = this.activeColor;
-//    ctx.globalAlpha = 0.01;
+    ctx.moveTo(this.stepAsX(s-1), this.stepAsY(s-1));
+    ctx.lineTo(this.stepAsX(s), this.stepAsY(s));
+    ctx.closePath();
     ctx.stroke();
 }
 
