@@ -5,7 +5,7 @@ function WalkerMain () {
     this.startX = Math.floor(c.width / 2);
     this.startY = Math.floor(c.height / 2);
     
-    this.walkerCount = 100;
+    this.walkerCount = 250;
     this.stepDistance = 6;
     this.lineWidth = 4;
     
@@ -26,6 +26,7 @@ function draw () {
     // Active
     i = activeWalkers.length-1;
     while (i >= 0) {
+//    for(i in activeWalkers) {
         w = activeWalkers[i];
         w.step();
         if(w.active) {
@@ -42,8 +43,8 @@ function draw () {
     // Complete
     i = 0;
     while (i < completeWalkers.length) {
+//    for(i in completeWalkers) {
         w = completeWalkers[i];
-//        console.log("w: "+w);
         w.beginDraw();
         w.drawAll();
         w.endDraw();
@@ -86,77 +87,23 @@ Walker.prototype.toString = function () {
 }
 Walker.prototype.step = function() {
 //    console.log(this.id+": step()");
-    var dirs = [0, 1, 2, 3];
-    var ban = [];
-    
     var beg = this.getStep(-2);
-    var end = this.getStep(-1);
+    var end = this.getStep(-1).clone();
+    var dirs = [];
 
-    if(beg) {
-        // Prevent vert backstep
-        if (beg.y < end.y) {
-            ban.push(0);
-        }
-        else if (beg.y > end.y) {
-            ban.push(2);
-        }
-        // Prevent hor backstep
-        if (beg.x < end.x) {
-            ban.push(3);
-        }
-        else if (beg.x > end.x) {
-            ban.push(1)
-        }
-    }
-    // enforce low bounds
-    if(this.stepAsX(-1) - stepDistance <= 0) {
-        ban.push(3);
-    }
-    if(this.stepAsY(-1) - stepDistance <= 0) {
-        ban.push(0);
-    }
-    // enforce high bounds
-    if(this.stepAsX(-1) + stepDistance >= c.width) {
-        ban.push(1);
-    }
-    if(this.stepAsY(-1) + stepDistance >= c.height) {
-        ban.push(2);
-    }
-    
-//    console.log("dirs pre ban:  "+dirs);
-//    console.log("ban list:      "+ban);
-    dirs = dirs.filter( function (e) {
-        return ban.indexOf(e) < 0;
-    })
-//    console.log("dirs post ban: "+dirs);
-    
+    // Check that there's a prior position, don't allow an immediate step back, make sure the walker stays in the canvas bounds.
+    if((!beg || beg.y >= end.y) && startY + (end.y-1) * stepDistance >= 0)          {/*console.log("N");*/ dirs.push(NORTH);}
+    if((!beg || beg.y <= end.y) && startY + (end.y+1) * stepDistance <= c.height)   {/*console.log("S");*/ dirs.push(SOUTH);}
+    if((!beg || beg.x >= end.x) && startX + (end.x-1) * stepDistance >= 0)          {/*console.log("W");*/ dirs.push(WEST);}
+    if((!beg || beg.x <= end.x) && startX + (end.x+1) * stepDistance <= c.width)    {/*console.log("E");*/ dirs.push(EAST);}
     var dir = dirs[Math.floor(Math.random()*dirs.length)];
-    var p = this.getStep(-1).clone();
+    end = end.add(dir);    
+    this.steps.push(end);
     
-    switch (dir){
-        case 0: // UP
-            p.y++;
-            break;
-        case 1: // RIGHT
-            p.x++;
-            break;
-        case 2: // DOWN
-            p.y--;
-            break;
-        case 3: // LEFT
-            p.x--;
-            break;
-        default:
-            console.log(this.id+": Couldn't step!");
-    }
-    
-    this.steps.push(p);
-    
-    if(p.x === 0 && p.y === 0){
+    if(end.equals(ORIGIN)){
         this.active = false;
     }
 }
-
 Walker.prototype.getStep = function (step) {
 //    console.log(this.id+ ": getStep("+step+")");
     var s = step || this.steps.length - 1;
@@ -165,12 +112,10 @@ Walker.prototype.getStep = function (step) {
     } 
     return this.steps[s];
 }
-
 Walker.prototype.stepAsX = function (step) {
     var p = this.getStep(step);
     return startX + stepDistance * p.x;
 }
-
 Walker.prototype.stepAsY = function (step) {
     var p = this.getStep(step);
     return startY + stepDistance * p.y;
@@ -206,6 +151,9 @@ function Point (x, y){
 Point.prototype.toString = function () {
     return "[Point x: "+this.x+", y: "+this.y+"]";
 };
+Point.prototype.add = function(v){
+	return v ? new Point(this.x + v.x, this.y + v.y) : this;
+};
 Point.prototype.clone = function(){
 	return new Point(this.x, this.y);
 };
@@ -220,6 +168,18 @@ Point.prototype.distance = function(v){
 	var y = this.y - v.y;
 	return Math.sqrt(x * x + y * y);
 };
+Point.prototype.equals = function(toCompare){
+	return this.x == toCompare.x && this.y == toCompare.y;
+};
+
+//////////////////
+//  DIRECTIONS  //
+//////////////////
+var NORTH = new Point( 0, -1);
+var EAST  = new Point( 1,  0);
+var SOUTH = new Point( 0,  1);
+var WEST  = new Point(-1,  0);
+var ORIGIN= new Point( 0,  0);
 
 //////////////
 //  UTIL    //
