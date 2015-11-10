@@ -5,7 +5,7 @@ function WalkerMain () {
     this.startX = Math.floor(c.width / 2);
     this.startY = Math.floor(c.height / 2);
     
-    this.walkerCount = 250;
+    this.walkerCount = 1;
     this.stepDistance = 6;
     this.lineWidth = 4;
     
@@ -84,7 +84,7 @@ function playToggle () {
 function Walker (id) {
     this.id = id;
     var xPos = yPos = lastDrawnStep = 0;
-    this.steps = [new Point()];
+    this.steps = [ORIGIN.clone()];
     this.active = true;
     this.activeColor = "rgba(255, 250, 250, 0.05)";
     this.completeColor = "rgba(255, 128, 255, 0.25)";
@@ -99,10 +99,10 @@ Walker.prototype.step = function() {
     var dirs = [];
 
     // Check that there's a prior position, don't allow an immediate step back, make sure the walker stays in the canvas bounds.
-    if((!beg || beg.y >= end.y) && startY + (end.y-1) * stepDistance >= 0)          {/*console.log("N");*/ dirs.push(NORTH);}
-    if((!beg || beg.y <= end.y) && startY + (end.y+1) * stepDistance <= c.height)   {/*console.log("S");*/ dirs.push(SOUTH);}
-    if((!beg || beg.x >= end.x) && startX + (end.x-1) * stepDistance >= 0)          {/*console.log("W");*/ dirs.push(WEST);}
-    if((!beg || beg.x <= end.x) && startX + (end.x+1) * stepDistance <= c.width)    {/*console.log("E");*/ dirs.push(EAST);}
+    if((!beg || beg.y >= end.y) && startY + (end.y-1) * stepDistance >= 0)          {/*console.log("N");*/ dirs.push(DIR_NORTH);}
+    if((!beg || beg.y <= end.y) && startY + (end.y+1) * stepDistance <= c.height)   {/*console.log("S");*/ dirs.push(DIR_SOUTH);}
+    if((!beg || beg.x >= end.x) && startX + (end.x-1) * stepDistance >= 0)          {/*console.log("W");*/ dirs.push(DIR_WEST);}
+    if((!beg || beg.x <= end.x) && startX + (end.x+1) * stepDistance <= c.width)    {/*console.log("E");*/ dirs.push(DIR_EAST);}
     var dir = dirs[Math.floor(Math.random()*dirs.length)];
     end = end.add(dir);    
     this.steps.push(end);
@@ -147,6 +147,17 @@ Walker.prototype.drawAll = function () {
         this.drawStep(i);
     }
 }
+//////////////
+//  STEP    //
+//////////////
+var Step = function (walker, count, point, direction) {
+    return {
+        walker:walker,
+        count:count,
+        point:point,
+        direction:direction
+    }
+}
 
 //////////////
 //  POINT   //
@@ -182,10 +193,11 @@ Point.prototype.equals = function(toCompare){
 //////////////////
 //  DIRECTIONS  //
 //////////////////
-var NORTH = new Point( 0, -1);
-var EAST  = new Point( 1,  0);
-var SOUTH = new Point( 0,  1);
-var WEST  = new Point(-1,  0);
+var DIR_NORTH = new Point( 0, -1);
+var DIR_EAST  = new Point( 1,  0);
+var DIR_SOUTH = new Point( 0,  1);
+var DIR_WEST  = new Point(-1,  0);
+var DIR_NONE = new Point(0, 0);
 var ORIGIN= new Point( 0,  0);
 
 //////////////
