@@ -13,7 +13,10 @@ function WalkerMain () {
     this.activeWalkers = walkers.slice();
     this.completeWalkers = [];
     
-    this.play = true;
+    configFPS("fpsElement");
+    
+    this.play = false;
+    document.getElementById("playToggle").innerHTML = play?"PAUSE":"PLAY";
     draw();
 };
 
@@ -31,6 +34,7 @@ function draw () {
         w.step();
         if(w.active) {
             w.beginDraw();
+//            w.drawStep(w.steps.length-1);
             w.drawAll();
             w.endDraw();
         } else {
@@ -46,6 +50,7 @@ function draw () {
 //    for(i in completeWalkers) {
         w = completeWalkers[i];
         w.beginDraw();
+//        w.drawStep(w.steps.length-1);
         w.drawAll();
         w.endDraw();
         i++;
@@ -54,6 +59,8 @@ function draw () {
     if(play && activeWalkers.length>0) {
         requestAnimationFrame(draw)
     }
+    
+    fps.display.innerHTML = fps.getFPS()+" fps";
 }
 
 function createWalkers (count) {
@@ -67,7 +74,7 @@ function createWalkers (count) {
 
 function playToggle () {
     play = !play;
-    console.log("PLAY: "+play);
+    document.getElementById("playToggle").innerHTML = play?"PAUSE":"PLAY";
     draw();
 }
 
@@ -184,4 +191,24 @@ var ORIGIN= new Point( 0,  0);
 //////////////
 //  UTIL    //
 //////////////
-
+configFPS = function(targetDisplay){
+    this.fps = {
+    display: document.getElementById(targetDisplay),
+    startTime: 0,
+    frameNumber: 0,
+    getFPS: function(){
+        this.frameNumber++;
+        var d = new Date();
+        d = d.getTime();
+        currentTime = (d - this.startTime) / 1000;
+        result = Math.floor((this.frameNumber / currentTime));
+        
+        if(currentTime>1){
+            this.startTime = new Date;
+            this.startTime = this.startTime.getTime();
+            this.frameNumber = 0;
+        }
+        return result;
+    }
+}
+}
