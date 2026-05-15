@@ -47,7 +47,7 @@ interface SimStore extends SimConfig, SimStats {
 }
 
 const DEFAULT_CONFIG: SimConfig = {
-  walkerCount: 64,
+  walkerCount: 128,
   bound: 20,
   stepSize: 1,
   seed: 1,
@@ -56,16 +56,16 @@ const DEFAULT_CONFIG: SimConfig = {
   showBoundingCube: true,
   visibility: "all",
   active: {
-    width: 1.5,
+    width: 1,
     color: "#ff80ff",
-    opacity: 0.35,
-    glow: 1.0,
+    opacity: 0.25,
+    glow: 0.8,
   },
   retired: {
-    width: 2.5,
+    width: 1,
     color: "#ff3df0",
     opacity: 0.9,
-    glow: 1.8,
+    glow: 2.5,
   },
   cameraMode: "perspective",
   cameraAutoOrbit: false,
