@@ -315,6 +315,7 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
 }
 
 export function ControlPanel() {
+  const [panelOpen, setPanelOpen] = useState(true);
   const {
     walkerCount,
     bound,
@@ -338,14 +339,28 @@ export function ControlPanel() {
 
   return (
     <Card className="w-80 backdrop-blur-md bg-card/70 border-border/50 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col gap-3 py-3">
-      <CardHeader className="flex flex-row items-center justify-between gap-2 shrink-0">
-        <CardTitle className="text-base tracking-tight">Random Walker</CardTitle>
-        <Badge variant={playing ? "default" : "outline"} className="font-mono">
-          {playing ? "live" : "paused"}
-        </Badge>
-      </CardHeader>
-
-      <CardContent className="space-y-3 overflow-y-auto pb-1">
+      <Collapsible open={panelOpen} onOpenChange={setPanelOpen}>
+        <CollapsibleTrigger
+          render={
+            <button
+              type="button"
+              className="flex w-full items-center justify-between gap-2 px-4 py-0.5 text-left hover:bg-muted/30 transition-colors"
+              aria-label={panelOpen ? "Collapse panel" : "Expand panel"}
+            >
+              <CardTitle className="text-base tracking-tight">Random Walker</CardTitle>
+              <div className="flex items-center gap-2">
+                <Badge variant={playing ? "default" : "outline"} className="font-mono">
+                  {playing ? "live" : "paused"}
+                </Badge>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {panelOpen ? "−" : "+"}
+                </span>
+              </div>
+            </button>
+          }
+        />
+        <CollapsibleContent>
+          <CardContent className="space-y-3 overflow-y-auto pb-1 pt-3 border-t border-border/30">
         <div className="flex gap-2">
           <Toggle
             pressed={playing}
@@ -486,7 +501,9 @@ export function ControlPanel() {
           <StatRow label="Total steps" value={totalSteps} />
           <StatRow label="Longest retired" value={longestRetiredSteps} />
         </CollapsibleCard>
-      </CardContent>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 }
