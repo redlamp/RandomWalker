@@ -77,7 +77,7 @@ export function CameraPanel() {
           <Slider
             value={[cameraOrbitSpeed]}
             min={0.05}
-            max={4}
+            max={2}
             step={0.05}
             onValueChange={(v) => setConfig({ cameraOrbitSpeed: toScalar(v) })}
             disabled={!cameraAutoOrbit}
