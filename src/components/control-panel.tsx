@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { useSimStore, type GroupStyle, type VisibilityMode } from "@/store/sim-store";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -84,20 +88,56 @@ function ColorRow({
   );
 }
 
-function GroupStyleSection({
+function CollapsibleCard({
   title,
+  defaultOpen = false,
+  children,
+  rightSlot,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+  rightSlot?: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Card size="sm" className="bg-card/60 ring-foreground/15">
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger
+          render={
+            <button
+              type="button"
+              className="flex w-full items-center justify-between px-3 text-left hover:bg-muted/30 transition-colors"
+            >
+              <CardTitle className="text-xs uppercase tracking-widest">
+                {title}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                {rightSlot}
+                <span className="font-mono text-xs text-muted-foreground">
+                  {open ? "−" : "+"}
+                </span>
+              </div>
+            </button>
+          }
+        />
+        <CollapsibleContent>
+          <CardContent className="space-y-3 pt-3">{children}</CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
+  );
+}
+
+function GroupStyleBody({
   style,
   setStyle,
 }: {
-  title: string;
   style: GroupStyle;
   setStyle: (patch: Partial<GroupStyle>) => void;
 }) {
   return (
-    <div className="space-y-3">
-      <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        {title}
-      </div>
+    <>
       <SliderRow
         label="Width"
         value={style.width}
@@ -126,7 +166,7 @@ function GroupStyleSection({
         format={(v) => `${v.toFixed(2)}×`}
         onChange={(v) => setStyle({ glow: v })}
       />
-    </div>
+    </>
   );
 }
 
@@ -142,8 +182,6 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
 }
 
 export function ControlPanel() {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-
   const {
     walkerCount,
     bound,
@@ -166,15 +204,15 @@ export function ControlPanel() {
   } = useSimStore();
 
   return (
-    <Card className="w-80 backdrop-blur-md bg-card/70 border-border/50 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col">
-      <CardHeader className="pb-3 flex flex-row items-center justify-between gap-2 shrink-0">
+    <Card className="w-80 backdrop-blur-md bg-card/70 border-border/50 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col gap-3">
+      <CardHeader className="pb-0 flex flex-row items-center justify-between gap-2 shrink-0">
         <CardTitle className="text-base tracking-tight">Random Walker</CardTitle>
         <Badge variant={playing ? "default" : "outline"} className="font-mono">
           {playing ? "live" : "paused"}
         </Badge>
       </CardHeader>
 
-      <CardContent className="space-y-4 overflow-y-auto">
+      <CardContent className="space-y-3 overflow-y-auto">
         <div className="flex gap-2">
           <Toggle
             pressed={playing}
@@ -235,92 +273,80 @@ export function ControlPanel() {
           </ToggleGroup>
         </div>
 
-        <Separator />
-
-        <div className="space-y-1.5">
-          <StatRow label="Active" value={activeCount} />
-          <StatRow label="Retired" value={retiredCount} />
-          <StatRow label="Total steps" value={totalSteps} />
-          <StatRow label="Longest retired" value={longestRetiredSteps} />
+        <CollapsibleCard title="World">
+          <SliderRow
+            label="Walkers"
+            value={walkerCount}
+            min={1}
+            max={256}
+            step={1}
+            onChange={(v) => setConfig({ walkerCount: v })}
+          />
+          <SliderRow
+            label="Bound"
+            value={bound}
+            min={4}
+            max={64}
+            step={1}
+            onChange={(v) => setConfig({ bound: v })}
+          />
+          <SliderRow
+            label="Step size"
+            value={stepSize}
+            min={0.25}
+            max={4}
+            step={0.05}
+            format={(v) => v.toFixed(2)}
+            onChange={(v) => setConfig({ stepSize: v })}
+          />
+          <SliderRow
+            label="Speed"
+            value={speed}
+            min={0.1}
+            max={8}
+            step={0.1}
+            format={(v) => `${v.toFixed(1)}×`}
+            onChange={(v) => setConfig({ speed: v })}
+          />
+          <div className="flex items-center justify-between">
+            <Label htmlFor="cube-toggle" className="text-xs text-muted-foreground">
+              Bounding cube
+            </Label>
+            <Switch
+              id="cube-toggle"
+              checked={showBoundingCube}
+              onCheckedChange={(v) => setConfig({ showBoundingCube: v })}
+            />
+          </div>
           <div className="flex items-center justify-between pt-1">
             <span className="text-xs text-muted-foreground">Seed</span>
             <Badge variant="outline" className="font-mono">
               {seed}
             </Badge>
           </div>
-        </div>
+        </CollapsibleCard>
 
-        <Separator />
+        <CollapsibleCard title="Walkers">
+          <GroupStyleBody style={active} setStyle={setActive} />
+        </CollapsibleCard>
 
-        <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
-          <CollapsibleTrigger
-            render={
-              <Button variant="outline" className="w-full justify-between">
-                <span>Settings</span>
-                <span className="font-mono text-xs">{settingsOpen ? "−" : "+"}</span>
-              </Button>
-            }
-          />
-          <CollapsibleContent className="pt-4 space-y-5">
-            <div className="space-y-3">
-              <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                World
-              </div>
-              <SliderRow
-                label="Walkers"
-                value={walkerCount}
-                min={1}
-                max={256}
-                step={1}
-                onChange={(v) => setConfig({ walkerCount: v })}
-              />
-              <SliderRow
-                label="Bound"
-                value={bound}
-                min={4}
-                max={64}
-                step={1}
-                onChange={(v) => setConfig({ bound: v })}
-              />
-              <SliderRow
-                label="Step size"
-                value={stepSize}
-                min={0.25}
-                max={4}
-                step={0.05}
-                format={(v) => v.toFixed(2)}
-                onChange={(v) => setConfig({ stepSize: v })}
-              />
-              <SliderRow
-                label="Speed"
-                value={speed}
-                min={0.1}
-                max={8}
-                step={0.1}
-                format={(v) => `${v.toFixed(1)}×`}
-                onChange={(v) => setConfig({ speed: v })}
-              />
-              <div className="flex items-center justify-between">
-                <Label htmlFor="cube-toggle" className="text-xs text-muted-foreground">
-                  Bounding cube
-                </Label>
-                <Switch
-                  id="cube-toggle"
-                  checked={showBoundingCube}
-                  onCheckedChange={(v) => setConfig({ showBoundingCube: v })}
-                />
-              </div>
-            </div>
+        <CollapsibleCard title="Retired">
+          <GroupStyleBody style={retired} setStyle={setRetired} />
+        </CollapsibleCard>
 
-            <Separator />
-
-            <GroupStyleSection title="Walkers" style={active} setStyle={setActive} />
-
-            <Separator />
-
-            <GroupStyleSection title="Retired" style={retired} setStyle={setRetired} />
-          </CollapsibleContent>
-        </Collapsible>
+        <CollapsibleCard
+          title="Stats"
+          rightSlot={
+            <Badge variant="secondary" className="font-mono tabular-nums">
+              {activeCount}/{retiredCount}
+            </Badge>
+          }
+        >
+          <StatRow label="Active" value={activeCount} />
+          <StatRow label="Retired" value={retiredCount} />
+          <StatRow label="Total steps" value={totalSteps} />
+          <StatRow label="Longest retired" value={longestRetiredSteps} />
+        </CollapsibleCard>
       </CardContent>
     </Card>
   );
