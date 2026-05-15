@@ -1,11 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { Line2 } from "three/examples/jsm/lines/Line2.js";
-import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
-import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { useSimStore } from "@/store/sim-store";
 import { World, type Walker } from "@/lib/walker";
 
@@ -13,9 +10,10 @@ const MAX_STEPS = 16384;
 
 interface WalkerLineRef {
   walker: Walker;
-  geometry: LineGeometry;
-  material: LineMaterial;
-  line: Line2;
+  geometry: THREE.BufferGeometry;
+  positionAttr: THREE.BufferAttribute;
+  material: THREE.LineBasicMaterial;
+  line: THREE.Line;
   positions: Float32Array;
   uploadedSteps: number;
   retired: boolean;
@@ -23,20 +21,17 @@ interface WalkerLineRef {
 }
 
 function makeMaterial(width: number, opacity: number) {
-  const m = new LineMaterial({
+  return new THREE.LineBasicMaterial({
     color: 0xffffff,
     linewidth: width,
-    worldUnits: false,
     transparent: true,
     opacity,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
-    dashed: false,
   });
-  return m;
 }
 
-function applyColorAndGlow(material: LineMaterial, hex: string, glow: number) {
+function applyColorAndGlow(material: THREE.LineBasicMaterial, hex: string, glow: number) {
   const c = new THREE.Color(hex);
   c.multiplyScalar(Math.max(0, glow));
   material.color.copy(c);
@@ -48,21 +43,30 @@ function buildWorld(
   seed: number,
   activeWidth: number,
   activeOpacity: number,
+  activeColor: string,
+  activeGlow: number,
 ): { world: World; refs: WalkerLineRef[] } {
   const w = new World({ count, bound, seed });
   const refs: WalkerLineRef[] = w.active.map((walker) => {
     const positions = new Float32Array(MAX_STEPS * 3);
-    const geom = new LineGeometry();
-    geom.setPositions([0, 0, 0, 0, 0, 0]);
+    const geom = new THREE.BufferGeometry();
+    const attr = new THREE.BufferAttribute(positions, 3);
+    attr.setUsage(THREE.DynamicDrawUsage);
+    geom.setAttribute("position", attr);
+    geom.setDrawRange(0, 1);
+    attr.setXYZ(0, 0, 0, 0);
+    attr.needsUpdate = true;
 
     const mat = makeMaterial(activeWidth, activeOpacity);
-    const line = new Line2(geom, mat);
+    applyColorAndGlow(mat, activeColor, activeGlow);
+
+    const line = new THREE.Line(geom, mat);
     line.frustumCulled = false;
-    line.computeLineDistances();
 
     return {
       walker,
       geometry: geom,
+      positionAttr: attr,
       material: mat,
       line,
       positions,
@@ -80,14 +84,10 @@ function flushPositions(l: WalkerLineRef, stepSize: number) {
 
   for (let i = l.uploadedSteps; i < stepsLen; i++) {
     const s = l.walker.steps[i];
-    const j = i * 3;
-    l.positions[j] = s[0] * stepSize;
-    l.positions[j + 1] = s[1] * stepSize;
-    l.positions[j + 2] = s[2] * stepSize;
+    l.positionAttr.setXYZ(i, s[0] * stepSize, s[1] * stepSize, s[2] * stepSize);
   }
-
-  const view = l.positions.subarray(0, stepsLen * 3);
-  l.geometry.setPositions(view);
+  l.geometry.setDrawRange(0, stepsLen);
+  l.positionAttr.needsUpdate = true;
   l.uploadedSteps = stepsLen;
 }
 
@@ -104,8 +104,6 @@ export function WalkerSim() {
   const retired = useSimStore((s) => s.retired);
   const setStats = useSimStore((s) => s.setStats);
 
-  const { size } = useThree();
-
   const worldRef = useRef<World | null>(null);
   const linesRef = useRef<WalkerLineRef[]>([]);
   const frameAccum = useRef(0);
@@ -114,8 +112,17 @@ export function WalkerSim() {
   const retiredGroupRef = useRef<THREE.Group>(null);
 
   const built = useMemo(
-    () => buildWorld(walkerCount, bound, seed, active.width, active.opacity),
-    // intentionally exclude active.* — they're applied via a separate effect.
+    () =>
+      buildWorld(
+        walkerCount,
+        bound,
+        seed,
+        active.width,
+        active.opacity,
+        active.color,
+        active.glow,
+      ),
+    // active.* applied via a separate effect so tweaks don't rebuild the world.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [generation, walkerCount, bound, seed],
   );
@@ -151,13 +158,6 @@ export function WalkerSim() {
     };
   }, [built, setStats]);
 
-  // keep LineMaterial resolution synced
-  useEffect(() => {
-    for (const l of linesRef.current) {
-      l.material.resolution.set(size.width, size.height);
-    }
-  }, [size.width, size.height, built]);
-
   // apply active style live to non-retired walkers
   useEffect(() => {
     for (const l of linesRef.current) {
@@ -189,6 +189,13 @@ export function WalkerSim() {
       retiredGroupRef.current.visible = visibility === "all" || visibility === "retired";
     }
   }, [visibility]);
+
+  // step-size changes need full rebuild of uploaded positions
+  useEffect(() => {
+    for (const l of linesRef.current) {
+      l.uploadedSteps = 0;
+    }
+  }, [stepSize]);
 
   useFrame((_, delta) => {
     const world = worldRef.current;
@@ -239,22 +246,10 @@ export function WalkerSim() {
       }
     }
 
-    // upload any pending step changes (incl. step-size live updates)
     for (const l of lines) {
       flushPositions(l, stepSize);
     }
   });
-
-  // step-size changes need full rebuild of uploaded positions
-  useEffect(() => {
-    for (const l of linesRef.current) {
-      l.uploadedSteps = 0;
-      // re-write origin into buffer
-      l.positions[0] = 0;
-      l.positions[1] = 0;
-      l.positions[2] = 0;
-    }
-  }, [stepSize, built]);
 
   return (
     <>
