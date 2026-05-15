@@ -8,6 +8,7 @@ import { KernelSize } from "postprocessing";
 import { useSimStore } from "@/store/sim-store";
 import { WalkerSim } from "./WalkerSim";
 import { BoundingCube } from "./BoundingCube";
+import { FpsReporter } from "./FpsReporter";
 
 export function RandomWalkerScene() {
   const bound = useSimStore((s) => s.bound);
@@ -53,6 +54,7 @@ export function RandomWalkerScene() {
       <pointLight position={[50, 50, 50]} intensity={0.6} />
       {showBoundingCube && <BoundingCube bound={bound} stepSize={stepSize} />}
       <WalkerSim />
+      <FpsReporter />
       <EffectComposer>
         <Bloom
           intensity={1.0}
