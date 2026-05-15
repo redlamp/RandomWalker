@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSimStore, type CameraMode } from "@/store/sim-store";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -39,9 +39,9 @@ export function CameraPanel() {
               type="button"
               className="flex w-full items-center justify-between gap-2 px-3 py-1 text-left hover:bg-muted/30 transition-colors"
             >
-              <CardTitle className="text-xs uppercase tracking-widest text-muted-foreground">
+              <h2 className="font-heading text-xs font-medium uppercase tracking-widest text-muted-foreground">
                 Camera
-              </CardTitle>
+              </h2>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="font-mono tabular-nums">
                   {fps} fps

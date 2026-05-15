@@ -315,7 +315,7 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
 }
 
 export function ControlPanel() {
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
   const {
     walkerCount,
     bound,
@@ -347,7 +347,9 @@ export function ControlPanel() {
               className="flex w-full items-center justify-between gap-2 px-4 py-0.5 text-left hover:bg-muted/30 transition-colors"
               aria-label={panelOpen ? "Collapse panel" : "Expand panel"}
             >
-              <CardTitle className="text-base tracking-tight">Random Walker</CardTitle>
+              <h1 className="font-heading text-base font-semibold uppercase leading-snug tracking-widest">
+                Random Walkers
+              </h1>
               <div className="flex items-center gap-2">
                 <Badge variant={playing ? "default" : "outline"} className="font-mono">
                   {playing ? "live" : "paused"}
