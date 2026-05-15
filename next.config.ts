@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   assetPrefix: isPages ? `/${repo}/` : undefined,
   images: { unoptimized: true },
   trailingSlash: true,
+  devIndicators: isPages ? false : undefined,
+  poweredByHeader: false,
 };
 
 export default nextConfig;
