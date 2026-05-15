@@ -214,7 +214,7 @@ export function ControlPanel() {
         </Badge>
       </CardHeader>
 
-      <CardContent className="space-y-3 overflow-y-auto">
+      <CardContent className="space-y-3 overflow-y-auto pb-1">
         <div className="flex gap-2">
           <Toggle
             pressed={playing}

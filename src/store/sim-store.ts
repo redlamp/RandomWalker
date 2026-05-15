@@ -69,7 +69,7 @@ const DEFAULT_CONFIG: SimConfig = {
     glow: 1.0,
   },
   cameraMode: "perspective",
-  cameraAutoOrbit: false,
+  cameraAutoOrbit: true,
   cameraOrbitSpeed: 0.5,
 };
 
