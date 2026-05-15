@@ -34,6 +34,7 @@ export interface SimStats {
   retiredCount: number;
   totalSteps: number;
   longestRetiredSteps: number;
+  fps: number;
 }
 
 interface SimStore extends SimConfig, SimStats {
@@ -78,6 +79,7 @@ export const useSimStore = create<SimStore>((set) => ({
   retiredCount: 0,
   totalSteps: 0,
   longestRetiredSteps: 0,
+  fps: 0,
   generation: 0,
   setConfig: (patch) => set((s) => ({ ...s, ...patch })),
   setActive: (patch) => set((s) => ({ active: { ...s.active, ...patch } })),

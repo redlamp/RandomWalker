@@ -101,13 +101,13 @@ function CollapsibleCard({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <Card size="sm" className="bg-card/60 ring-foreground/15">
+    <Card size="sm" className="bg-card/60 ring-foreground/15 gap-2 py-2">
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger
           render={
             <button
               type="button"
-              className="flex w-full items-center justify-between px-3 text-left hover:bg-muted/30 transition-colors"
+              className="flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-muted/30 transition-colors"
             >
               <CardTitle className="text-xs uppercase tracking-widest">
                 {title}
@@ -122,7 +122,9 @@ function CollapsibleCard({
           }
         />
         <CollapsibleContent>
-          <CardContent className="space-y-3 pt-3">{children}</CardContent>
+          <CardContent className="space-y-3 pt-3 border-t border-border/30">
+            {children}
+          </CardContent>
         </CollapsibleContent>
       </Collapsible>
     </Card>
@@ -204,8 +206,8 @@ export function ControlPanel() {
   } = useSimStore();
 
   return (
-    <Card className="w-80 backdrop-blur-md bg-card/70 border-border/50 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col gap-3">
-      <CardHeader className="pb-0 flex flex-row items-center justify-between gap-2 shrink-0">
+    <Card className="w-80 backdrop-blur-md bg-card/70 border-border/50 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col gap-3 py-3">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 shrink-0">
         <CardTitle className="text-base tracking-tight">Random Walker</CardTitle>
         <Badge variant={playing ? "default" : "outline"} className="font-mono">
           {playing ? "live" : "paused"}
