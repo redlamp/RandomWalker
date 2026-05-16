@@ -22,6 +22,7 @@ export interface SimConfig {
   bound: number;
   stepSize: number;
   seed: number;
+  newSeedOnStart: boolean;
   speed: number;
   playing: boolean;
   showBoundingCube: boolean;
@@ -92,6 +93,7 @@ const DEFAULT_CONFIG: SimConfig = {
   bound: 32,
   stepSize: 1,
   seed: 1,
+  newSeedOnStart: true,
   speed: 1,
   playing: true,
   showBoundingCube: true,
@@ -155,6 +157,7 @@ export const useSimStore = create<SimStore>()(
       migrate: (persisted) => persisted as Partial<SimStore>,
       partialize: (state) => ({
         seed: state.seed,
+        newSeedOnStart: state.newSeedOnStart,
         walkerCount: state.walkerCount,
         bound: state.bound,
         stepSize: state.stepSize,
@@ -181,6 +184,9 @@ export const useSimStore = create<SimStore>()(
         const savedRetired = state.retired;
         state.setTheme(state.theme);
         state.setConfig({ active: savedActive, retired: savedRetired });
+        if (state.newSeedOnStart) {
+          state.reset(Math.floor(Math.random() * 1e9));
+        }
       },
     },
   ),
