@@ -5,6 +5,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, OrthographicCamera } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { KernelSize } from "postprocessing";
+import { gsap } from "gsap";
 import * as THREE from "three";
 import { useSimStore } from "@/store/sim-store";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
@@ -13,6 +14,34 @@ import { BoundingCube } from "./BoundingCube";
 import { FpsReporter } from "./FpsReporter";
 import { Screenshotter } from "./Screenshotter";
 import { CameraSync } from "./CameraSync";
+
+function SceneBackground({ color }: { color: string }) {
+  const scene = useThree((s) => s.scene);
+  const fromColor = useRef(new THREE.Color());
+  const tweenValue = useRef({ v: 0 });
+
+  useEffect(() => {
+    if (!(scene.background instanceof THREE.Color)) {
+      scene.background = new THREE.Color(color);
+      return;
+    }
+    const bg = scene.background;
+    fromColor.current.copy(bg);
+    const target = new THREE.Color(color);
+    tweenValue.current.v = 0;
+    gsap.killTweensOf(tweenValue.current);
+    gsap.to(tweenValue.current, {
+      v: 1,
+      duration: 0.5,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        bg.lerpColors(fromColor.current, target, tweenValue.current.v);
+      },
+    });
+  }, [scene, color]);
+
+  return null;
+}
 
 function CameraSwapper({
   perspRef,
@@ -99,7 +128,7 @@ export function RandomWalkerScene() {
       }}
       style={{ background: worldBackground, transition: "background-color 400ms ease" }}
     >
-      <color attach="background" args={[worldBackground]} />
+      <SceneBackground color={worldBackground} />
       <PerspectiveCamera
         ref={perspRef}
         makeDefault={cameraMode === "perspective"}
