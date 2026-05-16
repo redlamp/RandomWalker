@@ -10,6 +10,7 @@ import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { WalkerSim } from "./WalkerSim";
 import { BoundingCube } from "./BoundingCube";
 import { FpsReporter } from "./FpsReporter";
+import { Screenshotter } from "./Screenshotter";
 
 export function RandomWalkerScene() {
   const bound = useSimStore((s) => s.bound);
@@ -18,6 +19,8 @@ export function RandomWalkerScene() {
   const cameraMode = useSimStore((s) => s.cameraMode);
   const cameraAutoOrbit = useSimStore((s) => s.cameraAutoOrbit);
   const cameraOrbitSpeed = useSimStore((s) => s.cameraOrbitSpeed);
+  const worldBackground = useSimStore((s) => s.worldBackground);
+  const bloomEnabled = useSimStore((s) => s.bloomEnabled);
   const setConfig = useSimStore((s) => s.setConfig);
 
   const reducedMotion = useReducedMotion();
@@ -46,8 +49,8 @@ export function RandomWalkerScene() {
   return (
     <Canvas
       dpr={[1, 2]}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
-      style={{ background: "radial-gradient(circle at center, #11111c 0%, #050509 70%)" }}
+      gl={{ antialias: true, powerPreference: "high-performance", preserveDrawingBuffer: true }}
+      style={{ background: worldBackground, transition: "background-color 400ms ease" }}
     >
       {cameraMode === "perspective" ? (
         <PerspectiveCamera makeDefault position={camPos} fov={45} />
@@ -66,15 +69,18 @@ export function RandomWalkerScene() {
       {showBoundingCube && <BoundingCube bound={bound} stepSize={stepSize} />}
       <WalkerSim />
       <FpsReporter />
-      <EffectComposer>
-        <Bloom
-          intensity={1.0}
-          kernelSize={KernelSize.LARGE}
-          luminanceThreshold={0.05}
-          luminanceSmoothing={0.2}
-          mipmapBlur
-        />
-      </EffectComposer>
+      <Screenshotter />
+      {bloomEnabled && (
+        <EffectComposer>
+          <Bloom
+            intensity={1.0}
+            kernelSize={KernelSize.LARGE}
+            luminanceThreshold={0.05}
+            luminanceSmoothing={0.2}
+            mipmapBlur
+          />
+        </EffectComposer>
+      )}
     </Canvas>
   );
 }

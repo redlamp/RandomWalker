@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Chakra_Petch, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeBridge } from "@/components/theme-bridge";
 
 const chakra = Chakra_Petch({
   variable: "--font-chakra-petch",
@@ -29,8 +30,10 @@ export default function RootLayout({
     <html
       lang="en"
       className={`dark ${chakra.variable} ${ibmMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full">
+        <ThemeBridge />
         <TooltipProvider delay={200}>{children}</TooltipProvider>
       </body>
     </html>
