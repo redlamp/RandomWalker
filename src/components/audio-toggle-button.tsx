@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { Volume2, VolumeOff } from "lucide-react";
 import { useSimStore } from "@/store/sim-store";
 import { Button } from "@/components/ui/button";
@@ -14,10 +13,6 @@ import { tryResume } from "@/lib/sfx";
 export function AudioToggleButton() {
   const audioEnabled = useSimStore((s) => s.audioEnabled);
   const setConfig = useSimStore((s) => s.setConfig);
-
-  useEffect(() => {
-    if (audioEnabled) tryResume();
-  }, [audioEnabled]);
 
   return (
     <Tooltip>
