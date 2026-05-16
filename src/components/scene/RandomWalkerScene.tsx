@@ -77,7 +77,10 @@ export function RandomWalkerScene() {
 
   const camDist = bound * stepSize * 3.2;
   const camPos = useMemo<[number, number, number]>(
-    () => [camDist * 0.5, camDist * Math.SQRT1_2, camDist * 0.5],
+    () => {
+      const k = camDist / Math.sqrt(3);
+      return [k, k, k];
+    },
     [camDist],
   );
   const orthoZoom = 30 / Math.max(stepSize, 0.01);
