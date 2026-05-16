@@ -110,6 +110,7 @@ export function WalkerSim() {
   const longestRef = useRef(0);
   const activeGroupRef = useRef<THREE.Group>(null);
   const retiredGroupRef = useRef<THREE.Group>(null);
+  const lastStatsAt = useRef(0);
 
   const built = useMemo(
     () =>
@@ -132,6 +133,7 @@ export function WalkerSim() {
     linesRef.current = built.refs;
     frameAccum.current = 0;
     longestRef.current = 0;
+    lastStatsAt.current = 0;
     setStats({
       activeCount: built.world.active.length,
       retiredCount: 0,
@@ -235,14 +237,18 @@ export function WalkerSim() {
           }
         }
 
-        let totalSteps = 0;
-        for (const l of lines) totalSteps += l.walker.steps.length;
-        setStats({
-          activeCount: world.active.length,
-          retiredCount: world.retired.length,
-          totalSteps,
-          longestRetiredSteps: longestRef.current,
-        });
+        const now = performance.now();
+        if (now - lastStatsAt.current > 100) {
+          lastStatsAt.current = now;
+          let totalSteps = 0;
+          for (const l of lines) totalSteps += l.walker.steps.length;
+          setStats({
+            activeCount: world.active.length,
+            retiredCount: world.retired.length,
+            totalSteps,
+            longestRetiredSteps: longestRef.current,
+          });
+        }
       }
     }
 
