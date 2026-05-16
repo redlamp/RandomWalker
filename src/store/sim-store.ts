@@ -52,6 +52,8 @@ interface SimStore extends SimConfig, SimStats {
   cameraUp: [number, number, number];
   snapToView: ViewSide | null;
   gizmoOverride: [number, number, number] | null;
+  controlPanelOpen: boolean;
+  openSections: string[];
   setConfig: (patch: Partial<SimConfig>) => void;
   setActive: (patch: Partial<GroupStyle>) => void;
   setRetired: (patch: Partial<GroupStyle>) => void;
@@ -65,6 +67,8 @@ interface SimStore extends SimConfig, SimStats {
   requestSnap: (view: ViewSide) => void;
   clearSnap: () => void;
   setGizmoOverride: (dir: [number, number, number] | null) => void;
+  setControlPanelOpen: (open: boolean) => void;
+  setOpenSections: (sections: string[]) => void;
 }
 
 const DARK_PRESET = {
@@ -114,6 +118,8 @@ export const useSimStore = create<SimStore>()(
       cameraUp: [0, 1, 0],
       snapToView: null,
       gizmoOverride: null,
+      controlPanelOpen: false,
+      openSections: [],
       setConfig: (patch) => set((s) => ({ ...s, ...patch })),
       setScreenshotFn: (fn) => set({ screenshotFn: fn }),
       setCameraDir: (dir) => set({ cameraDir: dir }),
@@ -139,20 +145,42 @@ export const useSimStore = create<SimStore>()(
           longestRetiredSteps: 0,
         })),
       setStats: (stats) => set(stats),
+      setControlPanelOpen: (open) => set({ controlPanelOpen: open }),
+      setOpenSections: (sections) => set({ openSections: sections }),
     }),
     {
       name: "random-walker-prefs",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
+      migrate: (persisted) => persisted as Partial<SimStore>,
       partialize: (state) => ({
+        seed: state.seed,
+        walkerCount: state.walkerCount,
+        bound: state.bound,
+        stepSize: state.stepSize,
+        speed: state.speed,
+        visibility: state.visibility,
+        active: state.active,
+        retired: state.retired,
+        cameraOrbitSpeed: state.cameraOrbitSpeed,
         theme: state.theme,
         playing: state.playing,
         cameraAutoOrbit: state.cameraAutoOrbit,
         showBoundingCube: state.showBoundingCube,
         cameraMode: state.cameraMode,
+        controlPanelOpen: state.controlPanelOpen,
+        openSections: state.openSections,
       }),
       onRehydrateStorage: () => (state) => {
-        if (state) state.setTheme(state.theme);
+        if (!state) return;
+        // setTheme re-applies the preset (worldBackground, bloomEnabled,
+        // blendMode + the default active/retired colors for that theme).
+        // Then re-overlay the persisted custom walker styles so the user's
+        // manual edits survive the preset re-apply.
+        const savedActive = state.active;
+        const savedRetired = state.retired;
+        state.setTheme(state.theme);
+        state.setConfig({ active: savedActive, retired: savedRetired });
       },
     },
   ),

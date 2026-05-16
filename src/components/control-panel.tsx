@@ -294,7 +294,10 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
 }
 
 export function ControlPanel() {
-  const [panelOpen, setPanelOpen] = useState(false);
+  const panelOpen = useSimStore((s) => s.controlPanelOpen);
+  const setPanelOpen = useSimStore((s) => s.setControlPanelOpen);
+  const openSections = useSimStore((s) => s.openSections);
+  const setOpenSections = useSimStore((s) => s.setOpenSections);
   const chevronRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -417,7 +420,7 @@ export function ControlPanel() {
           </ToggleGroup>
         </div>
 
-        <Accordion multiple className="rounded-lg ring-1 ring-foreground/15 bg-card/40 overflow-hidden">
+        <Accordion multiple value={openSections} onValueChange={setOpenSections} className="rounded-lg ring-1 ring-foreground/15 bg-card/40 overflow-hidden">
           <Section value="world" title="World" icon={<Globe className="size-3.5" />}>
             <SliderRow
               label="Count"
