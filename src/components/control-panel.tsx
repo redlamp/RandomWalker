@@ -316,26 +316,25 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
 
 export function ControlPanel() {
   const [panelOpen, setPanelOpen] = useState(false);
-  const {
-    walkerCount,
-    bound,
-    stepSize,
-    speed,
-    seed,
-    playing,
-    showBoundingCube,
-    visibility,
-    active,
-    retired,
-    activeCount,
-    retiredCount,
-    totalSteps,
-    longestRetiredSteps,
-    setConfig,
-    setActive,
-    setRetired,
-    reset,
-  } = useSimStore();
+
+  const walkerCount = useSimStore((s) => s.walkerCount);
+  const bound = useSimStore((s) => s.bound);
+  const stepSize = useSimStore((s) => s.stepSize);
+  const speed = useSimStore((s) => s.speed);
+  const seed = useSimStore((s) => s.seed);
+  const playing = useSimStore((s) => s.playing);
+  const showBoundingCube = useSimStore((s) => s.showBoundingCube);
+  const visibility = useSimStore((s) => s.visibility);
+  const active = useSimStore((s) => s.active);
+  const retired = useSimStore((s) => s.retired);
+  const activeCount = useSimStore((s) => s.activeCount);
+  const retiredCount = useSimStore((s) => s.retiredCount);
+  const totalSteps = useSimStore((s) => s.totalSteps);
+  const longestRetiredSteps = useSimStore((s) => s.longestRetiredSteps);
+  const setConfig = useSimStore((s) => s.setConfig);
+  const setActive = useSimStore((s) => s.setActive);
+  const setRetired = useSimStore((s) => s.setRetired);
+  const reset = useSimStore((s) => s.reset);
 
   return (
     <Card className="w-80 backdrop-blur-md bg-card/70 border-border/50 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col gap-3 py-3">
