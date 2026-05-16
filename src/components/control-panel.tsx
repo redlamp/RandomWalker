@@ -28,7 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Dices, Footprints, House, Pause, Play, RotateCcw } from "lucide-react";
+import { ChartColumn, ChevronDown, Dices, Footprints, Globe, House, Pause, Play, RotateCcw } from "lucide-react";
 
 function toScalar(v: number | readonly number[]): number {
   return Array.isArray(v) ? v[0] : (v as number);
@@ -423,18 +423,20 @@ export function ControlPanel() {
             <ToggleGroupItem value="all" className="flex-1">
               All
             </ToggleGroupItem>
-            <ToggleGroupItem value="active" className="flex-1">
-              Walkers
+            <ToggleGroupItem value="active" className="flex-1 gap-1.5" aria-label="Show walking">
+              <Footprints className="size-3.5" />
+              Walking
             </ToggleGroupItem>
-            <ToggleGroupItem value="retired" className="flex-1">
-              Retired
+            <ToggleGroupItem value="retired" className="flex-1 gap-1.5" aria-label="Show home">
+              <House className="size-3.5" />
+              Home
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
 
-        <CollapsibleCard title="World">
+        <CollapsibleCard title="World" icon={<Globe className="size-3.5" />}>
           <SliderRow
-            label="Walkers"
+            label="Count"
             value={walkerCount}
             min={1}
             max={256}
@@ -491,26 +493,27 @@ export function ControlPanel() {
           </div>
         </CollapsibleCard>
 
-        <CollapsibleCard title="Walkers" icon={<Footprints className="size-3.5" />}>
+        <CollapsibleCard title="Walking" icon={<Footprints className="size-3.5" />}>
           <GroupStyleBody style={active} setStyle={setActive} />
         </CollapsibleCard>
 
-        <CollapsibleCard title="Retired" icon={<House className="size-3.5" />}>
+        <CollapsibleCard title="Home" icon={<House className="size-3.5" />}>
           <GroupStyleBody style={retired} setStyle={setRetired} />
         </CollapsibleCard>
 
         <CollapsibleCard
           title="Stats"
+          icon={<ChartColumn className="size-3.5" />}
           rightSlot={
             <Badge variant="secondary" className="font-mono tabular-nums">
               {activeCount}/{retiredCount}
             </Badge>
           }
         >
-          <StatRow label="Active" value={activeCount} />
-          <StatRow label="Retired" value={retiredCount} />
+          <StatRow label="Walking" value={activeCount} />
+          <StatRow label="Home" value={retiredCount} />
           <StatRow label="Total steps" value={totalSteps} />
-          <StatRow label="Longest retired" value={longestRetiredSteps} />
+          <StatRow label="Longest home" value={longestRetiredSteps} />
         </CollapsibleCard>
           </CardContent>
         </CollapsibleContent>

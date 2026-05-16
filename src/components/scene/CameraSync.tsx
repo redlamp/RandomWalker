@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import { gsap } from "gsap";
 import * as THREE from "three";
 import { useSimStore, type ViewSide } from "@/store/sim-store";
 
@@ -58,17 +59,33 @@ export function CameraSync() {
   useEffect(() => {
     if (!snapToView) return;
     const dir = VIEW_DIRECTIONS[snapToView];
-    const dist = bound * stepSize * 3.2;
-    camera.position.set(dir[0] * dist, dir[1] * dist, dir[2] * dist);
-    camera.up.set(0, 1, 0);
-    camera.lookAt(0, 0, 0);
+    const radius = camera.position.length() || bound * stepSize * 3.2;
+    const target = {
+      x: dir[0] * radius,
+      y: dir[1] * radius,
+      z: dir[2] * radius,
+    };
     const oc = controls as unknown as OC;
-    if (oc) {
-      oc.target.set(0, 0, 0);
-      oc.update();
-    }
     setConfig({ cameraAutoOrbit: false });
-    clearSnap();
+    gsap.killTweensOf(camera.position);
+    gsap.to(camera.position, {
+      x: target.x,
+      y: target.y,
+      z: target.z,
+      duration: 0.6,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        camera.up.set(0, 1, 0);
+        camera.lookAt(0, 0, 0);
+        if (oc) {
+          oc.target.set(0, 0, 0);
+          oc.update();
+        }
+      },
+      onComplete: () => {
+        clearSnap();
+      },
+    });
   }, [snapToView, camera, controls, bound, stepSize, setConfig, clearSnap]);
 
   return null;
