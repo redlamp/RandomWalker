@@ -28,7 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Sun, Moon, Camera, ChevronDown } from "lucide-react";
+import { Sun, Moon, ChevronDown } from "lucide-react";
 
 function toScalar(v: number | readonly number[]): number {
   return Array.isArray(v) ? v[0] : (v as number);
@@ -273,15 +273,6 @@ function GroupStyleBody({
 }) {
   return (
     <>
-      <SliderRow
-        label="Width"
-        value={style.width}
-        min={0.5}
-        max={8}
-        step={0.1}
-        format={(v) => v.toFixed(1)}
-        onChange={(v) => setStyle({ width: v })}
-      />
       <ColorRow label="Color" value={style.color} onChange={(v) => setStyle({ color: v })} />
       <SliderRow
         label="Opacity"
@@ -332,7 +323,6 @@ export function ControlPanel() {
 
   const theme = useSimStore((s) => s.theme);
   const setTheme = useSimStore((s) => s.setTheme);
-  const screenshotFn = useSimStore((s) => s.screenshotFn);
 
   useEffect(() => {
     if (!themeIconRef.current) return;
@@ -392,23 +382,6 @@ export function ControlPanel() {
               <TooltipContent>
                 {theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
               </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7"
-                    onClick={() => screenshotFn?.()}
-                    disabled={!screenshotFn}
-                    aria-label="Export PNG"
-                  >
-                    <Camera className="size-4" />
-                  </Button>
-                }
-              />
-              <TooltipContent>Export PNG</TooltipContent>
             </Tooltip>
             <CollapsibleTrigger
               render={
