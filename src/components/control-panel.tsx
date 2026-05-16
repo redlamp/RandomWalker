@@ -377,7 +377,7 @@ export function ControlPanel() {
                 </Button>
               }
             />
-            <TooltipContent>Restart with current seed (keeps play/pause state)</TooltipContent>
+            <TooltipContent>Restart</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger
