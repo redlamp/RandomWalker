@@ -107,8 +107,9 @@ export function CameraPanel() {
                 </Badge>
               </div>
               <Slider
+                centered
                 value={[cameraOrbitSpeed]}
-                min={0.05}
+                min={-2}
                 max={2}
                 step={0.05}
                 onValueChange={(v) => setConfig({ cameraOrbitSpeed: toScalar(v) })}
