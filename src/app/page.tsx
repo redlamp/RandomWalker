@@ -19,7 +19,7 @@ export default function Home() {
         <CameraPanel />
       </div>
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 text-[10px] uppercase tracking-widest text-muted-foreground/70 font-mono">
-        Random Walker · 3D
+        Random Walkers · 3D
       </div>
     </main>
   );

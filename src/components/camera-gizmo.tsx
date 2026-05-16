@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useRef, type RefObject } from "react";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useSimStore, type ViewSide } from "@/store/sim-store";
@@ -28,7 +28,6 @@ function GizmoCameraMirror() {
   const tmp = useRef(new THREE.Vector3());
 
   useFrame(() => {
-    // Only mirror when the user isn't actively dragging the gizmo.
     if (useSimStore.getState().gizmoOverride) return;
     tmp.current.set(cameraDir[0], cameraDir[1], cameraDir[2]).normalize().multiplyScalar(3);
     camera.position.copy(tmp.current);
@@ -39,7 +38,7 @@ function GizmoCameraMirror() {
   return null;
 }
 
-function GizmoDragControls() {
+function GizmoDragControls({ dragTickRef }: { dragTickRef: RefObject<number> }) {
   const { camera } = useThree();
   const setGizmoOverride = useSimStore((s) => s.setGizmoOverride);
   const setConfig = useSimStore((s) => s.setConfig);
@@ -56,6 +55,7 @@ function GizmoDragControls() {
       }}
       onChange={() => {
         if (!dragging.current) return;
+        dragTickRef.current += 1;
         const d = camera.position.clone().normalize();
         setGizmoOverride([d.x, d.y, d.z]);
       }}
@@ -67,14 +67,27 @@ function GizmoDragControls() {
   );
 }
 
-function FacePlane({ face, onPick }: { face: Face; onPick: (side: ViewSide) => void }) {
+function FacePlane({
+  face,
+  onPick,
+  dragTickRef,
+}: {
+  face: Face;
+  onPick: (side: ViewSide) => void;
+  dragTickRef: RefObject<number>;
+}) {
   const matRef = useRef<THREE.MeshBasicMaterial>(null);
+  const downTick = useRef(0);
 
   return (
     <mesh
       position={face.position}
       rotation={face.rotation}
-      onPointerOver={(e) => {
+      onPointerDown={(e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation();
+        downTick.current = dragTickRef.current;
+      }}
+      onPointerOver={(e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation();
         if (matRef.current) matRef.current.opacity = 1.0;
         document.body.style.cursor = "pointer";
@@ -83,8 +96,9 @@ function FacePlane({ face, onPick }: { face: Face; onPick: (side: ViewSide) => v
         if (matRef.current) matRef.current.opacity = 0.85;
         document.body.style.cursor = "";
       }}
-      onClick={(e) => {
+      onClick={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
+        if (dragTickRef.current !== downTick.current) return;
         onPick(face.side);
       }}
     >
@@ -110,14 +124,15 @@ function CubeEdges() {
 }
 
 function GizmoScene({ onPick }: { onPick: (side: ViewSide) => void }) {
+  const dragTickRef = useRef(0);
   return (
     <>
       <GizmoCameraMirror />
-      <GizmoDragControls />
+      <GizmoDragControls dragTickRef={dragTickRef} />
       <ambientLight intensity={1} />
       <CubeEdges />
       {FACES.map((f) => (
-        <FacePlane key={f.side} face={f} onPick={onPick} />
+        <FacePlane key={f.side} face={f} onPick={onPick} dragTickRef={dragTickRef} />
       ))}
     </>
   );
