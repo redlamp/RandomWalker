@@ -49,9 +49,15 @@ export function RandomWalkerScene() {
   return (
     <Canvas
       dpr={[1, 2]}
-      gl={{ antialias: true, powerPreference: "high-performance", preserveDrawingBuffer: true }}
+      gl={{
+        antialias: true,
+        powerPreference: "high-performance",
+        preserveDrawingBuffer: true,
+        alpha: false,
+      }}
       style={{ background: worldBackground, transition: "background-color 400ms ease" }}
     >
+      <color attach="background" args={[worldBackground]} />
       {cameraMode === "perspective" ? (
         <PerspectiveCamera makeDefault position={camPos} fov={45} />
       ) : (
