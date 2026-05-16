@@ -240,12 +240,12 @@ function Section({
 }) {
   return (
     <AccordionItem value={value} className="not-last:border-b border-foreground/15">
-      <AccordionTrigger className="px-3 py-2 text-xs uppercase tracking-widest font-medium hover:no-underline hover:bg-muted/30 transition-colors items-center justify-start gap-2">
-        <span className="flex items-center gap-1.5">
+      <AccordionTrigger className="px-3 py-2 text-xs uppercase tracking-widest font-medium hover:no-underline hover:bg-muted/30 transition-colors items-center gap-2">
+        <span className="flex flex-1 min-w-0 items-center gap-1.5">
           {icon}
           {title}
         </span>
-        {rightSlot && <span className="ml-auto mr-2 flex items-center">{rightSlot}</span>}
+        {rightSlot && <span className="flex shrink-0 items-center mr-2">{rightSlot}</span>}
       </AccordionTrigger>
       <AccordionContent className="px-3 pt-1 pb-3 space-y-3">{children}</AccordionContent>
     </AccordionItem>
