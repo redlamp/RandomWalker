@@ -3,8 +3,32 @@
 let ctx: AudioContext | null = null;
 let noiseBuffer: AudioBuffer | null = null;
 let lastPlayAt = 0;
+let unlocked = false;
+let unlockWired = false;
 const MIN_GAP_MS = 25;
 const NOISE_BUFFER_SECONDS = 0.2;
+
+function wireUnlock() {
+  if (unlockWired || typeof window === "undefined") return;
+  unlockWired = true;
+  const onGesture = () => {
+    const c = getCtx();
+    if (!c) return;
+    c.resume()
+      .then(() => {
+        unlocked = true;
+      })
+      .catch(() => {});
+    if (unlocked) {
+      window.removeEventListener("pointerdown", onGesture);
+      window.removeEventListener("keydown", onGesture);
+      window.removeEventListener("touchstart", onGesture);
+    }
+  };
+  window.addEventListener("pointerdown", onGesture);
+  window.addEventListener("keydown", onGesture);
+  window.addEventListener("touchstart", onGesture);
+}
 
 function rand(center: number, spread: number) {
   return center + (Math.random() * 2 - 1) * spread;
@@ -19,6 +43,7 @@ function getCtx(): AudioContext | null {
         .webkitAudioContext;
     if (!Ctor) return null;
     ctx = new Ctor();
+    wireUnlock();
   }
   return ctx;
 }
@@ -36,13 +61,10 @@ function getNoise(c: AudioContext): AudioBuffer {
 export function playHomeClick() {
   const c = getCtx();
   if (!c) return;
+  if (c.state === "suspended") return;
   const now = performance.now();
   if (now - lastPlayAt < MIN_GAP_MS) return;
   lastPlayAt = now;
-
-  if (c.state === "suspended") {
-    c.resume().catch(() => {});
-  }
 
   const t = c.currentTime;
   const src = c.createBufferSource();
