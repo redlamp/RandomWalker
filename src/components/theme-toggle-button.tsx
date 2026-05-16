@@ -32,7 +32,7 @@ export function ThemeToggleButton() {
           <Button
             variant="secondary"
             size="icon"
-            className="backdrop-blur-md bg-card/70 border border-border/50 shadow-lg"
+            className="shadow-lg text-secondary-foreground"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
           >
