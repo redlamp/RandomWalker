@@ -70,22 +70,30 @@ export function CameraSync() {
     const dir = VIEW_DIRECTIONS[snapToView];
     const up = VIEW_UPS[snapToView];
     const radius = camera.position.length() || bound * stepSize * 3.2;
-    const target = {
-      x: dir[0] * radius,
-      y: dir[1] * radius,
-      z: dir[2] * radius,
-    };
     const oc = controls as unknown as OC;
     setConfig({ cameraAutoOrbit: false });
-    gsap.killTweensOf(camera.position);
-    gsap.killTweensOf(camera.up);
-    gsap.to(camera.position, {
-      x: target.x,
-      y: target.y,
-      z: target.z,
-      duration: 0.6,
+
+    const fromDir = camera.position.clone().normalize();
+    const toDir = new THREE.Vector3(dir[0], dir[1], dir[2]).normalize();
+    const qStart = new THREE.Quaternion();
+    const qEnd = new THREE.Quaternion().setFromUnitVectors(fromDir, toDir);
+    const qNow = new THREE.Quaternion();
+    const posBuf = new THREE.Vector3();
+
+    const fromUp = camera.up.clone();
+    const toUp = new THREE.Vector3(up[0], up[1], up[2]);
+
+    const progress = { t: 0 };
+    gsap.killTweensOf(progress);
+    gsap.to(progress, {
+      t: 1,
+      duration: 0.7,
       ease: "power2.inOut",
       onUpdate: () => {
+        qNow.slerpQuaternions(qStart, qEnd, progress.t);
+        posBuf.copy(fromDir).applyQuaternion(qNow).multiplyScalar(radius);
+        camera.position.copy(posBuf);
+        camera.up.lerpVectors(fromUp, toUp, progress.t);
         camera.lookAt(0, 0, 0);
         if (oc) {
           oc.target.set(0, 0, 0);
@@ -93,15 +101,9 @@ export function CameraSync() {
         }
       },
       onComplete: () => {
+        camera.up.copy(toUp);
         clearSnap();
       },
-    });
-    gsap.to(camera.up, {
-      x: up[0],
-      y: up[1],
-      z: up[2],
-      duration: 0.6,
-      ease: "power2.inOut",
     });
   }, [snapToView, camera, controls, bound, stepSize, setConfig, clearSnap]);
 
