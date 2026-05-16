@@ -15,11 +15,21 @@ const VIEW_DIRECTIONS: Record<ViewSide, [number, number, number]> = {
   "-z": [0, 0, -1],
 };
 
+const VIEW_UPS: Record<ViewSide, [number, number, number]> = {
+  "+x": [0, 1, 0],
+  "-x": [0, 1, 0],
+  "+y": [0, 0, -1],
+  "-y": [0, 0, 1],
+  "+z": [0, 1, 0],
+  "-z": [0, 1, 0],
+};
+
 type OC = { target: THREE.Vector3; update: () => void } | null;
 
 export function CameraSync() {
   const { camera, controls } = useThree();
   const setCameraDir = useSimStore((s) => s.setCameraDir);
+  const setCameraUp = useSimStore((s) => s.setCameraUp);
   const snapToView = useSimStore((s) => s.snapToView);
   const clearSnap = useSimStore((s) => s.clearSnap);
   const setConfig = useSimStore((s) => s.setConfig);
@@ -28,11 +38,11 @@ export function CameraSync() {
 
   const lastPushed = useRef(0);
   const lastDir = useRef(new THREE.Vector3(0, 0, 0));
+  const lastUp = useRef(new THREE.Vector3(0, 1, 0));
 
   useFrame(() => {
     const override = useSimStore.getState().gizmoOverride;
     if (override) {
-      // Gizmo is being dragged — adopt its direction at current radius.
       const radius = camera.position.length() || bound * stepSize * 3.2;
       camera.position.set(override[0] * radius, override[1] * radius, override[2] * radius);
       camera.up.set(0, 1, 0);
@@ -53,12 +63,17 @@ export function CameraSync() {
         lastDir.current.copy(dir);
         setCameraDir([dir.x, dir.y, dir.z]);
       }
+      if (camera.up.distanceToSquared(lastUp.current) > 1e-5) {
+        lastUp.current.copy(camera.up);
+        setCameraUp([camera.up.x, camera.up.y, camera.up.z]);
+      }
     }
   });
 
   useEffect(() => {
     if (!snapToView) return;
     const dir = VIEW_DIRECTIONS[snapToView];
+    const up = VIEW_UPS[snapToView];
     const radius = camera.position.length() || bound * stepSize * 3.2;
     const target = {
       x: dir[0] * radius,
@@ -68,6 +83,7 @@ export function CameraSync() {
     const oc = controls as unknown as OC;
     setConfig({ cameraAutoOrbit: false });
     gsap.killTweensOf(camera.position);
+    gsap.killTweensOf(camera.up);
     gsap.to(camera.position, {
       x: target.x,
       y: target.y,
@@ -75,7 +91,6 @@ export function CameraSync() {
       duration: 0.6,
       ease: "power2.inOut",
       onUpdate: () => {
-        camera.up.set(0, 1, 0);
         camera.lookAt(0, 0, 0);
         if (oc) {
           oc.target.set(0, 0, 0);
@@ -85,6 +100,13 @@ export function CameraSync() {
       onComplete: () => {
         clearSnap();
       },
+    });
+    gsap.to(camera.up, {
+      x: up[0],
+      y: up[1],
+      z: up[2],
+      duration: 0.6,
+      ease: "power2.inOut",
     });
   }, [snapToView, camera, controls, bound, stepSize, setConfig, clearSnap]);
 

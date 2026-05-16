@@ -22,8 +22,19 @@ const FACES: Face[] = [
   { side: "-z", position: [0, 0, -0.51], rotation: [0, Math.PI, 0], color: "#2a4a8a" },
 ];
 
+const HANDLE_OFFSET = 0.95;
+const HANDLES: { side: ViewSide; position: [number, number, number]; color: string }[] = [
+  { side: "+x", position: [HANDLE_OFFSET, 0, 0], color: "#ef4f4f" },
+  { side: "-x", position: [-HANDLE_OFFSET, 0, 0], color: "#8a2a2a" },
+  { side: "+y", position: [0, HANDLE_OFFSET, 0], color: "#4fef4f" },
+  { side: "-y", position: [0, -HANDLE_OFFSET, 0], color: "#2a8a2a" },
+  { side: "+z", position: [0, 0, HANDLE_OFFSET], color: "#4f8aef" },
+  { side: "-z", position: [0, 0, -HANDLE_OFFSET], color: "#2a4a8a" },
+];
+
 function GizmoCameraMirror() {
   const cameraDir = useSimStore((s) => s.cameraDir);
+  const cameraUp = useSimStore((s) => s.cameraUp);
   const { camera } = useThree();
   const tmp = useRef(new THREE.Vector3());
 
@@ -31,7 +42,7 @@ function GizmoCameraMirror() {
     if (useSimStore.getState().gizmoOverride) return;
     tmp.current.set(cameraDir[0], cameraDir[1], cameraDir[2]).normalize().multiplyScalar(3);
     camera.position.copy(tmp.current);
-    camera.up.set(0, 1, 0);
+    camera.up.set(cameraUp[0], cameraUp[1], cameraUp[2]);
     camera.lookAt(0, 0, 0);
   });
 
@@ -114,6 +125,50 @@ function FacePlane({
   );
 }
 
+function AxisHandle({
+  handle,
+  onPick,
+  dragTickRef,
+}: {
+  handle: { side: ViewSide; position: [number, number, number]; color: string };
+  onPick: (side: ViewSide) => void;
+  dragTickRef: RefObject<number>;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const matRef = useRef<THREE.MeshBasicMaterial>(null);
+  const downTick = useRef(0);
+
+  return (
+    <mesh
+      ref={meshRef}
+      position={handle.position}
+      onPointerDown={(e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation();
+        downTick.current = dragTickRef.current;
+      }}
+      onPointerOver={(e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation();
+        if (matRef.current) matRef.current.opacity = 1.0;
+        if (meshRef.current) meshRef.current.scale.setScalar(1.4);
+        document.body.style.cursor = "pointer";
+      }}
+      onPointerOut={() => {
+        if (matRef.current) matRef.current.opacity = 0.85;
+        if (meshRef.current) meshRef.current.scale.setScalar(1.0);
+        document.body.style.cursor = "";
+      }}
+      onClick={(e: ThreeEvent<MouseEvent>) => {
+        e.stopPropagation();
+        if (dragTickRef.current !== downTick.current) return;
+        onPick(handle.side);
+      }}
+    >
+      <sphereGeometry args={[0.11, 16, 16]} />
+      <meshBasicMaterial ref={matRef} color={handle.color} transparent opacity={0.85} />
+    </mesh>
+  );
+}
+
 function CubeEdges() {
   return (
     <lineSegments>
@@ -133,6 +188,9 @@ function GizmoScene({ onPick }: { onPick: (side: ViewSide) => void }) {
       <CubeEdges />
       {FACES.map((f) => (
         <FacePlane key={f.side} face={f} onPick={onPick} dragTickRef={dragTickRef} />
+      ))}
+      {HANDLES.map((h) => (
+        <AxisHandle key={`handle-${h.side}`} handle={h} onPick={onPick} dragTickRef={dragTickRef} />
       ))}
     </>
   );

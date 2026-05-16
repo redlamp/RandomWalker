@@ -48,6 +48,7 @@ interface SimStore extends SimConfig, SimStats {
   generation: number;
   screenshotFn: (() => void) | null;
   cameraDir: [number, number, number];
+  cameraUp: [number, number, number];
   snapToView: ViewSide | null;
   gizmoOverride: [number, number, number] | null;
   setConfig: (patch: Partial<SimConfig>) => void;
@@ -59,6 +60,7 @@ interface SimStore extends SimConfig, SimStats {
   setStats: (stats: Partial<SimStats>) => void;
   setScreenshotFn: (fn: (() => void) | null) => void;
   setCameraDir: (dir: [number, number, number]) => void;
+  setCameraUp: (up: [number, number, number]) => void;
   requestSnap: (view: ViewSide) => void;
   clearSnap: () => void;
   setGizmoOverride: (dir: [number, number, number] | null) => void;
@@ -106,11 +108,13 @@ export const useSimStore = create<SimStore>((set) => ({
   generation: 0,
   screenshotFn: null,
   cameraDir: [1, 0.7, 1],
+  cameraUp: [0, 1, 0],
   snapToView: null,
   gizmoOverride: null,
   setConfig: (patch) => set((s) => ({ ...s, ...patch })),
   setScreenshotFn: (fn) => set({ screenshotFn: fn }),
   setCameraDir: (dir) => set({ cameraDir: dir }),
+  setCameraUp: (up) => set({ cameraUp: up }),
   requestSnap: (view) => set({ snapToView: view }),
   clearSnap: () => set({ snapToView: null }),
   setGizmoOverride: (dir) => set({ gizmoOverride: dir }),
