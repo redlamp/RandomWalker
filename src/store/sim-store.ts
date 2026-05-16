@@ -76,8 +76,8 @@ const DARK_PRESET = {
 
 const LIGHT_PRESET = {
   worldBackground: "#e3dbca",
-  active: { width: 1, color: "#c8009d", opacity: 0.18, glow: 0 } as GroupStyle,
-  retired: { width: 1, color: "#5b2a82", opacity: 0.55, glow: 0 } as GroupStyle,
+  active: { width: 1, color: "#ff00ff", opacity: 0.18, glow: 0 } as GroupStyle,
+  retired: { width: 1, color: "#8040ff", opacity: 0.55, glow: 0 } as GroupStyle,
   bloomEnabled: false,
   blendMode: "multiply" as BlendMode,
 };
