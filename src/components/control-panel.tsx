@@ -261,7 +261,7 @@ function GroupStyleBody({
 }) {
   return (
     <>
-      <ColorRow label="Color" value={style.color} onChange={(v) => setStyle({ color: v })} />
+      <ColorRow label="Hexagon" value={style.color} onChange={(v) => setStyle({ color: v })} />
       <SliderRow
         label="Opacity"
         value={style.opacity}
