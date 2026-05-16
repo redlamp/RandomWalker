@@ -329,6 +329,7 @@ export function ControlPanel() {
   const setRetired = useSimStore((s) => s.setRetired);
   const reset = useSimStore((s) => s.reset);
   const resetWorldDefaults = useSimStore((s) => s.resetWorldDefaults);
+  const saveCurrentAsWorldDefaults = useSimStore((s) => s.saveCurrentAsWorldDefaults);
 
   return (
     <Card className="w-80 backdrop-blur-md bg-card/70 border-border/50 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col gap-3 py-3">
@@ -490,15 +491,25 @@ export function ControlPanel() {
                 className="w-24"
               />
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => resetWorldDefaults()}
-            >
-              <RotateCcw className="size-3.5" />
-              Reset to defaults
-            </Button>
+            <div className="flex flex-col gap-2 pt-1">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                onClick={() => saveCurrentAsWorldDefaults()}
+              >
+                Save current as defaults
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                onClick={() => resetWorldDefaults()}
+              >
+                <RotateCcw className="size-3.5" />
+                Reset to defaults
+              </Button>
+            </div>
           </Section>
 
           <Section

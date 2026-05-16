@@ -46,6 +46,16 @@ export interface SimStats {
   fps: number;
 }
 
+export interface WorldDefaults {
+  walkerCount: number;
+  bound: number;
+  stepSize: number;
+  speed: number;
+  showBoundingCube: boolean;
+  newSeedOnStart: boolean;
+  seed: number;
+}
+
 interface SimStore extends SimConfig, SimStats {
   generation: number;
   screenshotFn: (() => void) | null;
@@ -55,6 +65,7 @@ interface SimStore extends SimConfig, SimStats {
   gizmoOverride: [number, number, number] | null;
   controlPanelOpen: boolean;
   openSections: string[];
+  worldDefaults: WorldDefaults | null;
   setConfig: (patch: Partial<SimConfig>) => void;
   setActive: (patch: Partial<GroupStyle>) => void;
   setRetired: (patch: Partial<GroupStyle>) => void;
@@ -71,6 +82,7 @@ interface SimStore extends SimConfig, SimStats {
   setControlPanelOpen: (open: boolean) => void;
   setOpenSections: (sections: string[]) => void;
   resetWorldDefaults: () => void;
+  saveCurrentAsWorldDefaults: () => void;
 }
 
 const DARK_PRESET = {
@@ -123,6 +135,7 @@ export const useSimStore = create<SimStore>()(
       gizmoOverride: null,
       controlPanelOpen: false,
       openSections: [],
+      worldDefaults: null,
       setConfig: (patch) => set((s) => ({ ...s, ...patch })),
       setScreenshotFn: (fn) => set({ screenshotFn: fn }),
       setCameraDir: (dir) => set({ cameraDir: dir }),
@@ -151,19 +164,34 @@ export const useSimStore = create<SimStore>()(
       setControlPanelOpen: (open) => set({ controlPanelOpen: open }),
       setOpenSections: (sections) => set({ openSections: sections }),
       resetWorldDefaults: () =>
+        set((s) => {
+          const d = s.worldDefaults ?? DEFAULT_CONFIG;
+          return {
+            walkerCount: d.walkerCount,
+            bound: d.bound,
+            stepSize: d.stepSize,
+            speed: d.speed,
+            showBoundingCube: d.showBoundingCube,
+            newSeedOnStart: d.newSeedOnStart,
+            seed: d.seed,
+            generation: s.generation + 1,
+            activeCount: 0,
+            retiredCount: 0,
+            totalSteps: 0,
+            longestRetiredSteps: 0,
+          };
+        }),
+      saveCurrentAsWorldDefaults: () =>
         set((s) => ({
-          walkerCount: DEFAULT_CONFIG.walkerCount,
-          bound: DEFAULT_CONFIG.bound,
-          stepSize: DEFAULT_CONFIG.stepSize,
-          speed: DEFAULT_CONFIG.speed,
-          showBoundingCube: DEFAULT_CONFIG.showBoundingCube,
-          newSeedOnStart: DEFAULT_CONFIG.newSeedOnStart,
-          seed: DEFAULT_CONFIG.seed,
-          generation: s.generation + 1,
-          activeCount: 0,
-          retiredCount: 0,
-          totalSteps: 0,
-          longestRetiredSteps: 0,
+          worldDefaults: {
+            walkerCount: s.walkerCount,
+            bound: s.bound,
+            stepSize: s.stepSize,
+            speed: s.speed,
+            showBoundingCube: s.showBoundingCube,
+            newSeedOnStart: s.newSeedOnStart,
+            seed: s.seed,
+          },
         })),
     }),
     {
@@ -189,6 +217,7 @@ export const useSimStore = create<SimStore>()(
         cameraMode: state.cameraMode,
         controlPanelOpen: state.controlPanelOpen,
         openSections: state.openSections,
+        worldDefaults: state.worldDefaults,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
