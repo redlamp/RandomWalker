@@ -105,7 +105,7 @@ const DEFAULT_CONFIG: SimConfig = {
   walkerCount: 128,
   bound: 32,
   stepSize: 1,
-  seed: 1,
+  seed: 2,
   newSeedOnStart: true,
   speed: 1,
   playing: true,
