@@ -14,6 +14,7 @@ export interface GroupStyle {
 export type CameraMode = "perspective" | "orthographic";
 export type ThemeMode = "dark" | "light";
 export type BlendMode = "additive" | "multiply" | "normal";
+export type ViewSide = "+x" | "-x" | "+y" | "-y" | "+z" | "-z";
 
 export interface SimConfig {
   walkerCount: number;
@@ -46,6 +47,8 @@ export interface SimStats {
 interface SimStore extends SimConfig, SimStats {
   generation: number;
   screenshotFn: (() => void) | null;
+  cameraDir: [number, number, number];
+  snapToView: ViewSide | null;
   setConfig: (patch: Partial<SimConfig>) => void;
   setActive: (patch: Partial<GroupStyle>) => void;
   setRetired: (patch: Partial<GroupStyle>) => void;
@@ -54,6 +57,9 @@ interface SimStore extends SimConfig, SimStats {
   togglePlaying: () => void;
   setStats: (stats: Partial<SimStats>) => void;
   setScreenshotFn: (fn: (() => void) | null) => void;
+  setCameraDir: (dir: [number, number, number]) => void;
+  requestSnap: (view: ViewSide) => void;
+  clearSnap: () => void;
 }
 
 const DARK_PRESET = {
@@ -97,8 +103,13 @@ export const useSimStore = create<SimStore>((set) => ({
   fps: 0,
   generation: 0,
   screenshotFn: null,
+  cameraDir: [1, 0.7, 1],
+  snapToView: null,
   setConfig: (patch) => set((s) => ({ ...s, ...patch })),
   setScreenshotFn: (fn) => set({ screenshotFn: fn }),
+  setCameraDir: (dir) => set({ cameraDir: dir }),
+  requestSnap: (view) => set({ snapToView: view }),
+  clearSnap: () => set({ snapToView: null }),
   setActive: (patch) => set((s) => ({ active: { ...s.active, ...patch } })),
   setRetired: (patch) => set((s) => ({ retired: { ...s.retired, ...patch } })),
   setTheme: (theme) =>

@@ -28,7 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Dices } from "lucide-react";
+import { ChevronDown, Dices, Pause, Play } from "lucide-react";
 
 function toScalar(v: number | readonly number[]): number {
   return Array.isArray(v) ? v[0] : (v as number);
@@ -371,7 +371,7 @@ export function ControlPanel() {
             className="flex-1"
             aria-label={playing ? "Pause" : "Play"}
           >
-            {playing ? "Pause" : "Play"}
+            {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
           </Toggle>
           <Tooltip>
             <TooltipTrigger

@@ -14,7 +14,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Camera } from "lucide-react";
+import { Camera, Rotate3d } from "lucide-react";
+import { CameraGizmo } from "@/components/camera-gizmo";
 
 function toScalar(v: number | readonly number[]): number {
   return Array.isArray(v) ? v[0] : (v as number);
@@ -59,6 +60,7 @@ export function CameraPanel() {
 
         <CollapsibleContent>
           <CardContent className="space-y-3 pt-3 border-t border-border/30">
+            <CameraGizmo />
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">View</Label>
               <ToggleGroup
@@ -80,7 +82,10 @@ export function CameraPanel() {
             </div>
 
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-muted-foreground">Auto-orbit</Label>
+              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Rotate3d className="size-3.5" />
+                Orbit
+              </Label>
               <Toggle
                 pressed={cameraAutoOrbit}
                 onPressedChange={(pressed) => setConfig({ cameraAutoOrbit: pressed })}
@@ -88,7 +93,7 @@ export function CameraPanel() {
                 size="sm"
                 aria-label={cameraAutoOrbit ? "Pause orbit" : "Play orbit"}
               >
-                {cameraAutoOrbit ? "Pause" : "Play"}
+                <Rotate3d className="size-3.5" />
               </Toggle>
             </div>
 
