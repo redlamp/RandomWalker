@@ -2,23 +2,33 @@ import { Slider as SliderPrimitive } from "@base-ui/react/slider"
 
 import { cn } from "@/lib/utils"
 
+type SliderExtraProps = { centered?: boolean }
+
 function Slider({
   className,
   defaultValue,
   value,
   min = 0,
   max = 100,
+  centered = false,
   ...props
-}: SliderPrimitive.Root.Props) {
+}: SliderPrimitive.Root.Props & SliderExtraProps) {
   const _values = Array.isArray(value)
     ? value
     : Array.isArray(defaultValue)
       ? defaultValue
       : [min, max]
 
+  const single = typeof _values[0] === "number" ? _values[0] : 0
+  const total = max - min || 1
+  const centerPct = ((0 - min) / total) * 100
+  const valuePct = ((single - min) / total) * 100
+  const left = Math.max(0, Math.min(centerPct, valuePct))
+  const right = Math.max(0, 100 - Math.max(centerPct, valuePct))
+
   return (
     <SliderPrimitive.Root
-      className={cn("data-horizontal:w-full data-vertical:h-full", className)}
+      className={cn("data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full", className)}
       data-slot="slider"
       defaultValue={defaultValue}
       value={value}
@@ -27,15 +37,23 @@ function Slider({
       thumbAlignment="edge"
       {...props}
     >
-      <SliderPrimitive.Control className="relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
+      <SliderPrimitive.Control className="relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-40 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col">
         <SliderPrimitive.Track
           data-slot="slider-track"
-          className="relative grow overflow-hidden rounded-full bg-muted select-none data-horizontal:h-1 data-horizontal:w-full data-vertical:h-full data-vertical:w-1"
+          className="relative grow overflow-hidden rounded-full bg-foreground/30 ring-1 ring-foreground/10 select-none data-[orientation=horizontal]:h-2 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-2"
         >
-          <SliderPrimitive.Indicator
-            data-slot="slider-range"
-            className="bg-primary select-none data-horizontal:h-full data-vertical:w-full"
-          />
+          {centered ? (
+            <div
+              data-slot="slider-range"
+              className="bg-primary absolute top-0 bottom-0 select-none"
+              style={{ left: `${left}%`, right: `${right}%` }}
+            />
+          ) : (
+            <SliderPrimitive.Indicator
+              data-slot="slider-range"
+              className="bg-primary select-none data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
+            />
+          )}
         </SliderPrimitive.Track>
         {Array.from({ length: _values.length }, (_, index) => (
           <SliderPrimitive.Thumb

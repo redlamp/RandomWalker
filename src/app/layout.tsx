@@ -17,7 +17,7 @@ const ibmMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Random Walker",
+  title: "Random Walkers",
   description: "3D drunkard's walk visualization — modernized port of a 2015 HTML5 Canvas piece.",
 };
 

@@ -8,7 +8,8 @@ import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { InstancedInterleavedBuffer, InterleavedBufferAttribute } from "three";
 import { useSimStore, type BlendMode } from "@/store/sim-store";
-import { World, type Walker } from "@/lib/walker";
+import { World, type Walker, type Vec3 } from "@/lib/walker";
+import { playHomeClick } from "@/lib/sfx";
 
 const MAX_STEPS = 16384;
 const MAX_SEGMENTS = MAX_STEPS - 1;
@@ -35,6 +36,7 @@ interface WalkerLineRef {
   uploadedSegments: number;
   retired: boolean;
   capped: boolean;
+  finalStepCount: number;
 }
 
 function makeMaterial(width: number, opacity: number, blendMode: BlendMode) {
@@ -45,6 +47,7 @@ function makeMaterial(width: number, opacity: number, blendMode: BlendMode) {
     transparent: true,
     opacity,
     blending: blendingFor(blendMode),
+    premultipliedAlpha: true,
     depthWrite: false,
     dashed: false,
   });
@@ -81,7 +84,6 @@ function buildWorld(
 ): { world: World; refs: WalkerLineRef[] } {
   const w = new World({ count, bound, seed });
   const refs: WalkerLineRef[] = w.active.map((walker) => {
-    // Preallocated stride-6 buffer: per segment, [startX, startY, startZ, endX, endY, endZ].
     const buffer = new Float32Array(MAX_SEGMENTS * 6);
     const interleaved = new InstancedInterleavedBuffer(buffer, 6, 1);
     interleaved.setUsage(THREE.DynamicDrawUsage);
@@ -107,32 +109,25 @@ function buildWorld(
       uploadedSegments: 0,
       retired: false,
       capped: false,
+      finalStepCount: 0,
     };
   });
   return { world: w, refs };
 }
 
-function flushPositions(l: WalkerLineRef, stepSize: number) {
-  const stepsLen = Math.min(l.walker.steps.length, MAX_STEPS);
-  const targetSegments = Math.max(0, stepsLen - 1);
-  if (targetSegments === l.uploadedSegments) return;
-
-  // If targetSegments < uploadedSegments (after a stepSize-driven reset), rebuild from zero.
-  const startSeg = targetSegments < l.uploadedSegments ? 0 : l.uploadedSegments;
-  for (let i = startSeg; i < targetSegments; i++) {
-    const p0 = l.walker.steps[i];
-    const p1 = l.walker.steps[i + 1];
-    const off = i * 6;
-    l.buffer[off] = p0[0] * stepSize;
-    l.buffer[off + 1] = p0[1] * stepSize;
-    l.buffer[off + 2] = p0[2] * stepSize;
-    l.buffer[off + 3] = p1[0] * stepSize;
-    l.buffer[off + 4] = p1[1] * stepSize;
-    l.buffer[off + 5] = p1[2] * stepSize;
-  }
+function appendSegment(l: WalkerLineRef, from: Vec3, to: Vec3): boolean {
+  if (l.uploadedSegments >= MAX_SEGMENTS) return false;
+  const off = l.uploadedSegments * 6;
+  l.buffer[off] = from[0];
+  l.buffer[off + 1] = from[1];
+  l.buffer[off + 2] = from[2];
+  l.buffer[off + 3] = to[0];
+  l.buffer[off + 4] = to[1];
+  l.buffer[off + 5] = to[2];
+  l.uploadedSegments++;
   l.interleaved.needsUpdate = true;
-  l.geometry.instanceCount = targetSegments;
-  l.uploadedSegments = targetSegments;
+  l.geometry.instanceCount = l.uploadedSegments;
+  return true;
 }
 
 export function WalkerSim() {
@@ -155,6 +150,7 @@ export function WalkerSim() {
   const linesRef = useRef<WalkerLineRef[]>([]);
   const frameAccum = useRef(0);
   const longestRef = useRef(0);
+  const totalStepsRef = useRef(0);
   const activeGroupRef = useRef<THREE.Group>(null);
   const retiredGroupRef = useRef<THREE.Group>(null);
   const lastStatsAt = useRef(0);
@@ -181,11 +177,12 @@ export function WalkerSim() {
     linesRef.current = built.refs;
     frameAccum.current = 0;
     longestRef.current = 0;
+    totalStepsRef.current = 0;
     lastStatsAt.current = 0;
     setStats({
       activeCount: built.world.active.length,
       retiredCount: 0,
-      totalSteps: built.world.active.length,
+      totalSteps: 0,
       longestRetiredSteps: 0,
     });
 
@@ -208,14 +205,12 @@ export function WalkerSim() {
     };
   }, [built, setStats]);
 
-  // keep LineMaterial resolution synced to canvas size
   useEffect(() => {
     for (const l of linesRef.current) {
       l.material.resolution.set(size.width || window.innerWidth, size.height || window.innerHeight);
     }
   }, [size.width, size.height, built]);
 
-  // apply active style live to non-retired walkers
   useEffect(() => {
     for (const l of linesRef.current) {
       if (l.retired) continue;
@@ -226,7 +221,6 @@ export function WalkerSim() {
     }
   }, [active, blendMode, built]);
 
-  // apply retired style live to retired walkers
   useEffect(() => {
     for (const l of linesRef.current) {
       if (!l.retired) continue;
@@ -237,7 +231,6 @@ export function WalkerSim() {
     }
   }, [retired, blendMode, built]);
 
-  // apply blendMode to all walker materials
   useEffect(() => {
     const blending = blendingFor(blendMode);
     for (const l of linesRef.current) {
@@ -246,7 +239,6 @@ export function WalkerSim() {
     }
   }, [blendMode, built]);
 
-  // visibility toggle
   useEffect(() => {
     if (activeGroupRef.current) {
       activeGroupRef.current.visible = visibility === "all" || visibility === "active";
@@ -256,75 +248,73 @@ export function WalkerSim() {
     }
   }, [visibility]);
 
-  // step-size changes need full rebuild of uploaded positions
-  useEffect(() => {
-    for (const l of linesRef.current) {
-      l.uploadedSegments = 0;
-    }
-  }, [stepSize]);
-
   useFrame((_, delta) => {
     const world = worldRef.current;
     const lines = linesRef.current;
     if (!world || lines.length === 0) return;
 
-    if (playing) {
-      frameAccum.current += delta * 60 * speed;
-      let ticks = Math.floor(frameAccum.current);
-      if (ticks > 0) {
-        frameAccum.current -= ticks;
-        ticks = Math.min(ticks, 8);
+    if (!playing) return;
 
-        for (let t = 0; t < ticks; t++) {
-          world.tick();
-          for (const l of lines) {
-            if (l.retired || l.capped) continue;
-            if (l.walker.steps.length >= MAX_STEPS) {
-              l.capped = true;
-              l.walker.active = false;
-            }
+    frameAccum.current += delta * 60 * speed;
+    let ticks = Math.floor(frameAccum.current);
+    if (ticks <= 0) return;
+    frameAccum.current -= ticks;
+    ticks = Math.min(ticks, 8);
 
-            if (!l.walker.active && !l.retired) {
-              l.retired = true;
-              l.material.linewidth = retired.width;
-              l.material.opacity = retired.opacity;
-              applyColorAndGlow(l.material, retired.color, retired.glow, blendMode);
-              l.material.needsUpdate = true;
-              if (activeGroupRef.current && retiredGroupRef.current) {
-                activeGroupRef.current.remove(l.line);
-                retiredGroupRef.current.add(l.line);
-              }
-              if (l.walker.steps.length > longestRef.current) {
-                longestRef.current = l.walker.steps.length;
-              }
-            }
-          }
+    for (let t = 0; t < ticks; t++) {
+      const { segments } = world.tick();
+      for (const { walker, from, to } of segments) {
+        const l = lines[walker.id];
+        if (!l || l.capped) continue;
+        appendSegment(l, from, to);
+        totalStepsRef.current++;
+      }
+
+      for (const l of lines) {
+        if (l.capped || l.retired) continue;
+
+        if (l.uploadedSegments >= MAX_SEGMENTS && l.walker.active) {
+          l.capped = true;
+          l.walker.active = false;
         }
 
-        const now = performance.now();
-        if (now - lastStatsAt.current > 100) {
-          lastStatsAt.current = now;
-          let totalSteps = 0;
-          for (const l of lines) totalSteps += l.walker.steps.length;
-          setStats({
-            activeCount: world.active.length,
-            retiredCount: world.retired.length,
-            totalSteps,
-            longestRetiredSteps: longestRef.current,
-          });
+        if (!l.walker.active) {
+          l.retired = true;
+          l.finalStepCount = l.walker.stepCount;
+          const pos = l.walker.position;
+          const cameHome = !l.capped && pos[0] === 0 && pos[1] === 0 && pos[2] === 0;
+          l.material.linewidth = retired.width;
+          l.material.opacity = retired.opacity;
+          applyColorAndGlow(l.material, retired.color, retired.glow, blendMode);
+          l.material.needsUpdate = true;
+          if (activeGroupRef.current && retiredGroupRef.current) {
+            activeGroupRef.current.remove(l.line);
+            retiredGroupRef.current.add(l.line);
+          }
+          if (l.finalStepCount > longestRef.current) {
+            longestRef.current = l.finalStepCount;
+          }
+          if (cameHome) playHomeClick();
         }
       }
     }
 
-    for (const l of lines) {
-      flushPositions(l, stepSize);
+    const now = performance.now();
+    if (now - lastStatsAt.current > 100) {
+      lastStatsAt.current = now;
+      setStats({
+        activeCount: world.active.length,
+        retiredCount: world.retired.length,
+        totalSteps: totalStepsRef.current,
+        longestRetiredSteps: longestRef.current,
+      });
     }
   });
 
   return (
-    <>
+    <group scale={[stepSize, stepSize, stepSize]}>
       <group ref={activeGroupRef} />
       <group ref={retiredGroupRef} />
-    </>
+    </group>
   );
 }
