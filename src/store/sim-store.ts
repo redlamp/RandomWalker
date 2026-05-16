@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export type VisibilityMode = "all" | "active" | "retired";
 
@@ -98,42 +99,59 @@ const DEFAULT_CONFIG: SimConfig = {
   ...DARK_PRESET,
 };
 
-export const useSimStore = create<SimStore>((set) => ({
-  ...DEFAULT_CONFIG,
-  activeCount: 0,
-  retiredCount: 0,
-  totalSteps: 0,
-  longestRetiredSteps: 0,
-  fps: 0,
-  generation: 0,
-  screenshotFn: null,
-  cameraDir: [1, 0.7, 1],
-  cameraUp: [0, 1, 0],
-  snapToView: null,
-  gizmoOverride: null,
-  setConfig: (patch) => set((s) => ({ ...s, ...patch })),
-  setScreenshotFn: (fn) => set({ screenshotFn: fn }),
-  setCameraDir: (dir) => set({ cameraDir: dir }),
-  setCameraUp: (up) => set({ cameraUp: up }),
-  requestSnap: (view) => set({ snapToView: view }),
-  clearSnap: () => set({ snapToView: null }),
-  setGizmoOverride: (dir) => set({ gizmoOverride: dir }),
-  setActive: (patch) => set((s) => ({ active: { ...s.active, ...patch } })),
-  setRetired: (patch) => set((s) => ({ retired: { ...s.retired, ...patch } })),
-  setTheme: (theme) =>
-    set(() => ({
-      theme,
-      ...(theme === "dark" ? DARK_PRESET : LIGHT_PRESET),
-    })),
-  togglePlaying: () => set((s) => ({ playing: !s.playing })),
-  reset: (newSeed) =>
-    set((s) => ({
-      generation: s.generation + 1,
-      seed: newSeed ?? s.seed,
+export const useSimStore = create<SimStore>()(
+  persist(
+    (set) => ({
+      ...DEFAULT_CONFIG,
       activeCount: 0,
       retiredCount: 0,
       totalSteps: 0,
       longestRetiredSteps: 0,
-    })),
-  setStats: (stats) => set(stats),
-}));
+      fps: 0,
+      generation: 0,
+      screenshotFn: null,
+      cameraDir: [1, 0.7, 1],
+      cameraUp: [0, 1, 0],
+      snapToView: null,
+      gizmoOverride: null,
+      setConfig: (patch) => set((s) => ({ ...s, ...patch })),
+      setScreenshotFn: (fn) => set({ screenshotFn: fn }),
+      setCameraDir: (dir) => set({ cameraDir: dir }),
+      setCameraUp: (up) => set({ cameraUp: up }),
+      requestSnap: (view) => set({ snapToView: view }),
+      clearSnap: () => set({ snapToView: null }),
+      setGizmoOverride: (dir) => set({ gizmoOverride: dir }),
+      setActive: (patch) => set((s) => ({ active: { ...s.active, ...patch } })),
+      setRetired: (patch) => set((s) => ({ retired: { ...s.retired, ...patch } })),
+      setTheme: (theme) =>
+        set(() => ({
+          theme,
+          ...(theme === "dark" ? DARK_PRESET : LIGHT_PRESET),
+        })),
+      togglePlaying: () => set((s) => ({ playing: !s.playing })),
+      reset: (newSeed) =>
+        set((s) => ({
+          generation: s.generation + 1,
+          seed: newSeed ?? s.seed,
+          activeCount: 0,
+          retiredCount: 0,
+          totalSteps: 0,
+          longestRetiredSteps: 0,
+        })),
+      setStats: (stats) => set(stats),
+    }),
+    {
+      name: "random-walker-prefs",
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        theme: state.theme,
+        playing: state.playing,
+        cameraAutoOrbit: state.cameraAutoOrbit,
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (state) state.setTheme(state.theme);
+      },
+    },
+  ),
+);
