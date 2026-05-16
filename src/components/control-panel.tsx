@@ -288,9 +288,7 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <Badge variant="secondary" className="font-mono tabular-nums">
-        {value}
-      </Badge>
+      <span className="text-xs font-mono tabular-nums text-foreground">{value}</span>
     </div>
   );
 }
@@ -518,8 +516,6 @@ export function ControlPanel() {
             title="Stats"
             icon={<ChartColumn className="size-3.5" />}
           >
-            <StatRow label="Walking" value={activeCount} />
-            <StatRow label="Home" value={retiredCount} />
             <StatRow label="Total steps" value={totalSteps} />
             <StatRow label="Longest home" value={longestRetiredSteps} />
           </Section>
