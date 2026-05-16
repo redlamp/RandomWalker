@@ -85,7 +85,7 @@ export function playHomeClick() {
   filter.Q.value = rand(11, 3);
 
   const gain = c.createGain();
-  const peak = rand(0.09, 0.03);
+  const peak = rand(0.22, 0.06);
   gain.gain.setValueAtTime(0, t);
   gain.gain.linearRampToValueAtTime(peak, t + 0.002);
   gain.gain.exponentialRampToValueAtTime(0.0001, t + rand(0.07, 0.02));
