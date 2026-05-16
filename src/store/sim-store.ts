@@ -12,6 +12,8 @@ export interface GroupStyle {
 }
 
 export type CameraMode = "perspective" | "orthographic";
+export type ThemeMode = "dark" | "light";
+export type BlendMode = "additive" | "multiply" | "normal";
 
 export interface SimConfig {
   walkerCount: number;
@@ -27,6 +29,10 @@ export interface SimConfig {
   cameraMode: CameraMode;
   cameraAutoOrbit: boolean;
   cameraOrbitSpeed: number;
+  theme: ThemeMode;
+  worldBackground: string;
+  bloomEnabled: boolean;
+  blendMode: BlendMode;
 }
 
 export interface SimStats {
@@ -39,13 +45,32 @@ export interface SimStats {
 
 interface SimStore extends SimConfig, SimStats {
   generation: number;
+  screenshotFn: (() => void) | null;
   setConfig: (patch: Partial<SimConfig>) => void;
   setActive: (patch: Partial<GroupStyle>) => void;
   setRetired: (patch: Partial<GroupStyle>) => void;
+  setTheme: (theme: ThemeMode) => void;
   reset: (newSeed?: number) => void;
   togglePlaying: () => void;
   setStats: (stats: Partial<SimStats>) => void;
+  setScreenshotFn: (fn: (() => void) | null) => void;
 }
+
+const DARK_PRESET = {
+  worldBackground: "#050509",
+  active: { width: 1, color: "#ff80ff", opacity: 0.2, glow: 0.2 } as GroupStyle,
+  retired: { width: 1, color: "#00ffff", opacity: 0.5, glow: 0.6 } as GroupStyle,
+  bloomEnabled: true,
+  blendMode: "additive" as BlendMode,
+};
+
+const LIGHT_PRESET = {
+  worldBackground: "#e3dbca",
+  active: { width: 1, color: "#c8009d", opacity: 0.18, glow: 0 } as GroupStyle,
+  retired: { width: 1, color: "#5b2a82", opacity: 0.55, glow: 0 } as GroupStyle,
+  bloomEnabled: false,
+  blendMode: "multiply" as BlendMode,
+};
 
 const DEFAULT_CONFIG: SimConfig = {
   walkerCount: 128,
@@ -56,21 +81,11 @@ const DEFAULT_CONFIG: SimConfig = {
   playing: true,
   showBoundingCube: true,
   visibility: "all",
-  active: {
-    width: 1,
-    color: "#ff80ff",
-    opacity: 0.2,
-    glow: 0.2,
-  },
-  retired: {
-    width: 1,
-    color: "#00ffff",
-    opacity: 0.5,
-    glow: 0.6,
-  },
   cameraMode: "perspective",
   cameraAutoOrbit: true,
   cameraOrbitSpeed: 0.5,
+  theme: "dark",
+  ...DARK_PRESET,
 };
 
 export const useSimStore = create<SimStore>((set) => ({
@@ -81,9 +96,16 @@ export const useSimStore = create<SimStore>((set) => ({
   longestRetiredSteps: 0,
   fps: 0,
   generation: 0,
+  screenshotFn: null,
   setConfig: (patch) => set((s) => ({ ...s, ...patch })),
+  setScreenshotFn: (fn) => set({ screenshotFn: fn }),
   setActive: (patch) => set((s) => ({ active: { ...s.active, ...patch } })),
   setRetired: (patch) => set((s) => ({ retired: { ...s.retired, ...patch } })),
+  setTheme: (theme) =>
+    set(() => ({
+      theme,
+      ...(theme === "dark" ? DARK_PRESET : LIGHT_PRESET),
+    })),
   togglePlaying: () => set((s) => ({ playing: !s.playing })),
   reset: (newSeed) =>
     set((s) => ({
