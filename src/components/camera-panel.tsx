@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Toggle } from "@/components/ui/toggle";
+import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Collapsible,
@@ -60,9 +60,8 @@ export function CameraPanel() {
 
         <CollapsibleContent>
           <CardContent className="space-y-3 pt-3 border-t border-border/30">
-            <CameraGizmo />
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">View</Label>
+              <Label className="text-xs text-muted-foreground">Projection</Label>
               <ToggleGroup
                 value={[cameraMode]}
                 onValueChange={(arr) => {
@@ -81,20 +80,23 @@ export function CameraPanel() {
               </ToggleGroup>
             </div>
 
+            <CameraGizmo />
+
             <div className="flex items-center justify-between">
               <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Rotate3d className="size-3.5" />
                 Orbit
               </Label>
-              <Toggle
-                pressed={cameraAutoOrbit}
-                onPressedChange={(pressed) => setConfig({ cameraAutoOrbit: pressed })}
-                variant="outline"
-                size="sm"
-                aria-label={cameraAutoOrbit ? "Pause orbit" : "Play orbit"}
-              >
-                <Rotate3d className="size-3.5" />
-              </Toggle>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground w-7 text-right">
+                  {cameraAutoOrbit ? "On" : "Off"}
+                </span>
+                <Switch
+                  checked={cameraAutoOrbit}
+                  onCheckedChange={(v) => setConfig({ cameraAutoOrbit: v })}
+                  aria-label="Toggle camera orbit"
+                />
+              </div>
             </div>
 
             <div className="space-y-1">

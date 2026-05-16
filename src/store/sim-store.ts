@@ -49,6 +49,7 @@ interface SimStore extends SimConfig, SimStats {
   screenshotFn: (() => void) | null;
   cameraDir: [number, number, number];
   snapToView: ViewSide | null;
+  gizmoOverride: [number, number, number] | null;
   setConfig: (patch: Partial<SimConfig>) => void;
   setActive: (patch: Partial<GroupStyle>) => void;
   setRetired: (patch: Partial<GroupStyle>) => void;
@@ -60,6 +61,7 @@ interface SimStore extends SimConfig, SimStats {
   setCameraDir: (dir: [number, number, number]) => void;
   requestSnap: (view: ViewSide) => void;
   clearSnap: () => void;
+  setGizmoOverride: (dir: [number, number, number] | null) => void;
 }
 
 const DARK_PRESET = {
@@ -105,11 +107,13 @@ export const useSimStore = create<SimStore>((set) => ({
   screenshotFn: null,
   cameraDir: [1, 0.7, 1],
   snapToView: null,
+  gizmoOverride: null,
   setConfig: (patch) => set((s) => ({ ...s, ...patch })),
   setScreenshotFn: (fn) => set({ screenshotFn: fn }),
   setCameraDir: (dir) => set({ cameraDir: dir }),
   requestSnap: (view) => set({ snapToView: view }),
   clearSnap: () => set({ snapToView: null }),
+  setGizmoOverride: (dir) => set({ gizmoOverride: dir }),
   setActive: (patch) => set((s) => ({ active: { ...s.active, ...patch } })),
   setRetired: (patch) => set((s) => ({ retired: { ...s.retired, ...patch } })),
   setTheme: (theme) =>

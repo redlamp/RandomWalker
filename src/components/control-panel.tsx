@@ -28,7 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Dices, Pause, Play, RotateCcw } from "lucide-react";
+import { ChevronDown, Dices, Footprints, House, Pause, Play, RotateCcw } from "lucide-react";
 
 function toScalar(v: number | readonly number[]): number {
   return Array.isArray(v) ? v[0] : (v as number);
@@ -223,11 +223,13 @@ function ColorRow({
 
 function CollapsibleCard({
   title,
+  icon,
   defaultOpen = false,
   children,
   rightSlot,
 }: {
   title: string;
+  icon?: React.ReactNode;
   defaultOpen?: boolean;
   children: React.ReactNode;
   rightSlot?: React.ReactNode;
@@ -242,7 +244,8 @@ function CollapsibleCard({
               type="button"
               className="flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-muted/30 transition-colors"
             >
-              <CardTitle className="text-xs uppercase tracking-widest">
+              <CardTitle className="text-xs uppercase tracking-widest flex items-center gap-1.5">
+                {icon}
                 {title}
               </CardTitle>
               <div className="flex items-center gap-2">
@@ -488,11 +491,11 @@ export function ControlPanel() {
           </div>
         </CollapsibleCard>
 
-        <CollapsibleCard title="Walkers">
+        <CollapsibleCard title="Walkers" icon={<Footprints className="size-3.5" />}>
           <GroupStyleBody style={active} setStyle={setActive} />
         </CollapsibleCard>
 
-        <CollapsibleCard title="Retired">
+        <CollapsibleCard title="Retired" icon={<House className="size-3.5" />}>
           <GroupStyleBody style={retired} setStyle={setRetired} />
         </CollapsibleCard>
 

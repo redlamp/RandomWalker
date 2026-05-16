@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useSimStore, type ViewSide } from "@/store/sim-store";
 
@@ -10,24 +11,25 @@ interface Face {
   position: [number, number, number];
   rotation: [number, number, number];
   color: string;
-  label: string;
 }
 
 const FACES: Face[] = [
-  { side: "+x", position: [0.51, 0, 0], rotation: [0, Math.PI / 2, 0], color: "#ef4f4f", label: "+X" },
-  { side: "-x", position: [-0.51, 0, 0], rotation: [0, -Math.PI / 2, 0], color: "#8a2a2a", label: "-X" },
-  { side: "+y", position: [0, 0.51, 0], rotation: [-Math.PI / 2, 0, 0], color: "#4fef4f", label: "+Y" },
-  { side: "-y", position: [0, -0.51, 0], rotation: [Math.PI / 2, 0, 0], color: "#2a8a2a", label: "-Y" },
-  { side: "+z", position: [0, 0, 0.51], rotation: [0, 0, 0], color: "#4f8aef", label: "+Z" },
-  { side: "-z", position: [0, 0, -0.51], rotation: [0, Math.PI, 0], color: "#2a4a8a", label: "-Z" },
+  { side: "+x", position: [0.51, 0, 0], rotation: [0, Math.PI / 2, 0], color: "#ef4f4f" },
+  { side: "-x", position: [-0.51, 0, 0], rotation: [0, -Math.PI / 2, 0], color: "#8a2a2a" },
+  { side: "+y", position: [0, 0.51, 0], rotation: [-Math.PI / 2, 0, 0], color: "#4fef4f" },
+  { side: "-y", position: [0, -0.51, 0], rotation: [Math.PI / 2, 0, 0], color: "#2a8a2a" },
+  { side: "+z", position: [0, 0, 0.51], rotation: [0, 0, 0], color: "#4f8aef" },
+  { side: "-z", position: [0, 0, -0.51], rotation: [0, Math.PI, 0], color: "#2a4a8a" },
 ];
 
-function GizmoCamera() {
+function GizmoCameraMirror() {
   const cameraDir = useSimStore((s) => s.cameraDir);
   const { camera } = useThree();
   const tmp = useRef(new THREE.Vector3());
 
   useFrame(() => {
+    // Only mirror when the user isn't actively dragging the gizmo.
+    if (useSimStore.getState().gizmoOverride) return;
     tmp.current.set(cameraDir[0], cameraDir[1], cameraDir[2]).normalize().multiplyScalar(3);
     camera.position.copy(tmp.current);
     camera.up.set(0, 1, 0);
@@ -37,8 +39,35 @@ function GizmoCamera() {
   return null;
 }
 
+function GizmoDragControls() {
+  const { camera } = useThree();
+  const setGizmoOverride = useSimStore((s) => s.setGizmoOverride);
+  const setConfig = useSimStore((s) => s.setConfig);
+  const dragging = useRef(false);
+
+  return (
+    <OrbitControls
+      enablePan={false}
+      enableZoom={false}
+      enableDamping={false}
+      onStart={() => {
+        dragging.current = true;
+        setConfig({ cameraAutoOrbit: false });
+      }}
+      onChange={() => {
+        if (!dragging.current) return;
+        const d = camera.position.clone().normalize();
+        setGizmoOverride([d.x, d.y, d.z]);
+      }}
+      onEnd={() => {
+        dragging.current = false;
+        setGizmoOverride(null);
+      }}
+    />
+  );
+}
+
 function FacePlane({ face, onPick }: { face: Face; onPick: (side: ViewSide) => void }) {
-  const hovered = useRef(false);
   const matRef = useRef<THREE.MeshBasicMaterial>(null);
 
   return (
@@ -47,12 +76,10 @@ function FacePlane({ face, onPick }: { face: Face; onPick: (side: ViewSide) => v
       rotation={face.rotation}
       onPointerOver={(e) => {
         e.stopPropagation();
-        hovered.current = true;
         if (matRef.current) matRef.current.opacity = 1.0;
         document.body.style.cursor = "pointer";
       }}
       onPointerOut={() => {
-        hovered.current = false;
         if (matRef.current) matRef.current.opacity = 0.85;
         document.body.style.cursor = "";
       }}
@@ -77,7 +104,7 @@ function CubeEdges() {
   return (
     <lineSegments>
       <edgesGeometry args={[new THREE.BoxGeometry(1.01, 1.01, 1.01)]} />
-      <lineBasicMaterial color="#ffffff" transparent opacity={0.4} />
+      <lineBasicMaterial color="#ffffff" transparent opacity={0.5} />
     </lineSegments>
   );
 }
@@ -85,7 +112,8 @@ function CubeEdges() {
 function GizmoScene({ onPick }: { onPick: (side: ViewSide) => void }) {
   return (
     <>
-      <GizmoCamera />
+      <GizmoCameraMirror />
+      <GizmoDragControls />
       <ambientLight intensity={1} />
       <CubeEdges />
       {FACES.map((f) => (
@@ -99,7 +127,7 @@ export function CameraGizmo() {
   const requestSnap = useSimStore((s) => s.requestSnap);
 
   return (
-    <div className="h-24 w-full">
+    <div className="h-28 w-full cursor-grab active:cursor-grabbing">
       <Canvas
         camera={{ fov: 30, position: [3, 3, 3], near: 0.1, far: 50 }}
         gl={{ antialias: true, alpha: true }}
