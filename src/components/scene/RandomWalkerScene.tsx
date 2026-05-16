@@ -11,6 +11,7 @@ import { WalkerSim } from "./WalkerSim";
 import { BoundingCube } from "./BoundingCube";
 import { FpsReporter } from "./FpsReporter";
 import { Screenshotter } from "./Screenshotter";
+import { CameraSync } from "./CameraSync";
 
 export function RandomWalkerScene() {
   const bound = useSimStore((s) => s.bound);
@@ -76,6 +77,7 @@ export function RandomWalkerScene() {
       <WalkerSim />
       <FpsReporter />
       <Screenshotter />
+      <CameraSync />
       {bloomEnabled && (
         <EffectComposer>
           <Bloom
