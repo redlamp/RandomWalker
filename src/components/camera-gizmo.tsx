@@ -26,13 +26,21 @@ const FACES: Face[] = [
 ];
 
 const HANDLE_OFFSET = 0.78;
-const HANDLES: { side: ViewSide; position: [number, number, number]; color: string }[] = [
+const ISO_LEN = Math.sqrt(1 + 0.49 + 1);
+const ISO_HANDLE: [number, number, number] = [
+  (1 / ISO_LEN) * HANDLE_OFFSET,
+  (0.7 / ISO_LEN) * HANDLE_OFFSET,
+  (1 / ISO_LEN) * HANDLE_OFFSET,
+];
+
+const HANDLES: { side: ViewSide; position: [number, number, number]; color: string; radius?: number }[] = [
   { side: "+x", position: [HANDLE_OFFSET, 0, 0], color: "#ff8080" },
   { side: "-x", position: [-HANDLE_OFFSET, 0, 0], color: "#d96060" },
   { side: "+y", position: [0, HANDLE_OFFSET, 0], color: "#80ff80" },
   { side: "-y", position: [0, -HANDLE_OFFSET, 0], color: "#60d960" },
   { side: "+z", position: [0, 0, HANDLE_OFFSET], color: "#80b8ff" },
   { side: "-z", position: [0, 0, -HANDLE_OFFSET], color: "#6090d9" },
+  { side: "default", position: ISO_HANDLE, color: "#ffffff", radius: 0.13 },
 ];
 
 function GizmoCameraMirror() {
@@ -133,7 +141,7 @@ function AxisHandle({
   onPick,
   dragTickRef,
 }: {
-  handle: { side: ViewSide; position: [number, number, number]; color: string };
+  handle: { side: ViewSide; position: [number, number, number]; color: string; radius?: number };
   onPick: (side: ViewSide) => void;
   dragTickRef: RefObject<number>;
 }) {
@@ -166,7 +174,7 @@ function AxisHandle({
         onPick(handle.side);
       }}
     >
-      <sphereGeometry args={[0.11, 16, 16]} />
+      <sphereGeometry args={[handle.radius ?? 0.11, 16, 16]} />
       <meshBasicMaterial ref={matRef} color={handle.color} transparent opacity={0.85} />
     </mesh>
   );

@@ -6,6 +6,9 @@ import { gsap } from "gsap";
 import * as THREE from "three";
 import { useSimStore, type ViewSide } from "@/store/sim-store";
 
+const ISO_LEN = Math.sqrt(1 + 0.49 + 1);
+const ISO_DIR: [number, number, number] = [1 / ISO_LEN, 0.7 / ISO_LEN, 1 / ISO_LEN];
+
 const VIEW_DIRECTIONS: Record<ViewSide, [number, number, number]> = {
   "+x": [1, 0, 0],
   "-x": [-1, 0, 0],
@@ -13,6 +16,7 @@ const VIEW_DIRECTIONS: Record<ViewSide, [number, number, number]> = {
   "-y": [0, -1, 0],
   "+z": [0, 0, 1],
   "-z": [0, 0, -1],
+  default: ISO_DIR,
 };
 
 const VIEW_UPS: Record<ViewSide, [number, number, number]> = {
@@ -22,6 +26,7 @@ const VIEW_UPS: Record<ViewSide, [number, number, number]> = {
   "-y": [0, 0, 1],
   "+z": [0, 1, 0],
   "-z": [0, 1, 0],
+  default: [0, 1, 0],
 };
 
 type OC = { target: THREE.Vector3; update: () => void } | null;

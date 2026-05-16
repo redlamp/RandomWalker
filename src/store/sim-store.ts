@@ -14,7 +14,7 @@ export interface GroupStyle {
 export type CameraMode = "perspective" | "orthographic";
 export type ThemeMode = "dark" | "light";
 export type BlendMode = "additive" | "multiply" | "normal";
-export type ViewSide = "+x" | "-x" | "+y" | "-y" | "+z" | "-z";
+export type ViewSide = "+x" | "-x" | "+y" | "-y" | "+z" | "-z" | "default";
 
 export interface SimConfig {
   walkerCount: number;
