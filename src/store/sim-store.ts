@@ -70,6 +70,7 @@ interface SimStore extends SimConfig, SimStats {
   setGizmoOverride: (dir: [number, number, number] | null) => void;
   setControlPanelOpen: (open: boolean) => void;
   setOpenSections: (sections: string[]) => void;
+  resetWorldDefaults: () => void;
 }
 
 const DARK_PRESET = {
@@ -149,6 +150,21 @@ export const useSimStore = create<SimStore>()(
       setStats: (stats) => set(stats),
       setControlPanelOpen: (open) => set({ controlPanelOpen: open }),
       setOpenSections: (sections) => set({ openSections: sections }),
+      resetWorldDefaults: () =>
+        set((s) => ({
+          walkerCount: DEFAULT_CONFIG.walkerCount,
+          bound: DEFAULT_CONFIG.bound,
+          stepSize: DEFAULT_CONFIG.stepSize,
+          speed: DEFAULT_CONFIG.speed,
+          showBoundingCube: DEFAULT_CONFIG.showBoundingCube,
+          newSeedOnStart: DEFAULT_CONFIG.newSeedOnStart,
+          seed: DEFAULT_CONFIG.seed,
+          generation: s.generation + 1,
+          activeCount: 0,
+          retiredCount: 0,
+          totalSteps: 0,
+          longestRetiredSteps: 0,
+        })),
     }),
     {
       name: "random-walker-prefs",
