@@ -479,11 +479,37 @@ export function ControlPanel() {
             </div>
           </Section>
 
-          <Section value="walking" title="Walking" icon={<Footprints className="size-3.5" />}>
+          <Section
+            value="walking"
+            title="Walking"
+            icon={<Footprints className="size-3.5" />}
+            rightSlot={
+              <Badge
+                variant="outline"
+                className="font-mono tabular-nums"
+                style={{ borderColor: active.color, color: active.color }}
+              >
+                {activeCount}
+              </Badge>
+            }
+          >
             <GroupStyleBody style={active} setStyle={setActive} />
           </Section>
 
-          <Section value="home" title="Home" icon={<House className="size-3.5" />}>
+          <Section
+            value="home"
+            title="Home"
+            icon={<House className="size-3.5" />}
+            rightSlot={
+              <Badge
+                variant="outline"
+                className="font-mono tabular-nums"
+                style={{ borderColor: retired.color, color: retired.color }}
+              >
+                {retiredCount}
+              </Badge>
+            }
+          >
             <GroupStyleBody style={retired} setStyle={setRetired} />
           </Section>
 
@@ -491,11 +517,6 @@ export function ControlPanel() {
             value="stats"
             title="Stats"
             icon={<ChartColumn className="size-3.5" />}
-            rightSlot={
-              <Badge variant="secondary" className="font-mono tabular-nums">
-                {activeCount}/{retiredCount}
-              </Badge>
-            }
           >
             <StatRow label="Walking" value={activeCount} />
             <StatRow label="Home" value={retiredCount} />
