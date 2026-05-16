@@ -17,7 +17,7 @@ export default function Home() {
         <AudioToggleButton />
         <ThemeToggleButton />
       </div>
-      <div className="absolute bottom-8 right-4 z-10">
+      <div className="absolute bottom-5 right-4 z-10">
         <CameraPanel />
       </div>
       <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-10 text-[10px] uppercase tracking-widest text-muted-foreground/70 font-mono">
