@@ -6,8 +6,7 @@ import { gsap } from "gsap";
 import * as THREE from "three";
 import { useSimStore, type ViewSide } from "@/store/sim-store";
 
-const ISO_LEN = Math.sqrt(1 + 0.49 + 1);
-const ISO_DIR: [number, number, number] = [1 / ISO_LEN, 0.7 / ISO_LEN, 1 / ISO_LEN];
+const ISO_DIR: [number, number, number] = [0.5, Math.SQRT1_2, 0.5];
 
 const VIEW_DIRECTIONS: Record<ViewSide, [number, number, number]> = {
   "+x": [1, 0, 0],
