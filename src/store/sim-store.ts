@@ -36,6 +36,7 @@ export interface SimConfig {
   worldBackground: string;
   bloomEnabled: boolean;
   blendMode: BlendMode;
+  audioEnabled: boolean;
 }
 
 export interface SimStats {
@@ -115,6 +116,7 @@ const DEFAULT_CONFIG: SimConfig = {
   cameraAutoOrbit: true,
   cameraOrbitSpeed: 0.5,
   theme: "dark",
+  audioEnabled: false,
   ...DARK_PRESET,
 };
 
@@ -218,6 +220,7 @@ export const useSimStore = create<SimStore>()(
         controlPanelOpen: state.controlPanelOpen,
         openSections: state.openSections,
         worldDefaults: state.worldDefaults,
+        audioEnabled: state.audioEnabled,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;

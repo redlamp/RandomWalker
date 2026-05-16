@@ -1,5 +1,7 @@
 "use client";
 
+import { useSimStore } from "@/store/sim-store";
+
 let ctx: AudioContext | null = null;
 let noiseBuffer: AudioBuffer | null = null;
 let lastPlayAt = 0;
@@ -58,7 +60,14 @@ function getNoise(c: AudioContext): AudioBuffer {
   return buf;
 }
 
+export function tryResume(): Promise<void> {
+  const c = getCtx();
+  if (!c) return Promise.resolve();
+  return c.resume().catch(() => {});
+}
+
 export function playHomeClick() {
+  if (!useSimStore.getState().audioEnabled) return;
   const c = getCtx();
   if (!c) return;
   if (c.state === "suspended") return;
