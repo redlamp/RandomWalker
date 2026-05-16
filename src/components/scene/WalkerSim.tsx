@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
+import { Line2 } from "three/examples/jsm/lines/Line2.js";
+import { InstancedInterleavedBuffer, InterleavedBufferAttribute } from "three";
 import { useSimStore, type BlendMode } from "@/store/sim-store";
 import { World, type Walker } from "@/lib/walker";
 
 const MAX_STEPS = 16384;
+const MAX_SEGMENTS = MAX_STEPS - 1;
 
 function blendingFor(mode: BlendMode): THREE.Blending {
   switch (mode) {
@@ -22,29 +27,37 @@ function blendingFor(mode: BlendMode): THREE.Blending {
 
 interface WalkerLineRef {
   walker: Walker;
-  geometry: THREE.BufferGeometry;
-  positionAttr: THREE.BufferAttribute;
-  material: THREE.LineBasicMaterial;
-  line: THREE.Line;
-  positions: Float32Array;
-  uploadedSteps: number;
+  geometry: LineGeometry;
+  material: LineMaterial;
+  line: Line2;
+  buffer: Float32Array;
+  interleaved: InstancedInterleavedBuffer;
+  uploadedSegments: number;
   retired: boolean;
   capped: boolean;
 }
 
 function makeMaterial(width: number, opacity: number, blendMode: BlendMode) {
-  return new THREE.LineBasicMaterial({
+  const m = new LineMaterial({
     color: 0xffffff,
     linewidth: width,
+    worldUnits: false,
     transparent: true,
     opacity,
     blending: blendingFor(blendMode),
     depthWrite: false,
+    dashed: false,
   });
+  if (typeof window !== "undefined") {
+    m.resolution.set(window.innerWidth, window.innerHeight);
+  } else {
+    m.resolution.set(1024, 1024);
+  }
+  return m;
 }
 
 function applyColorAndGlow(
-  material: THREE.LineBasicMaterial,
+  material: LineMaterial,
   hex: string,
   glow: number,
   blendMode: BlendMode,
@@ -68,29 +81,30 @@ function buildWorld(
 ): { world: World; refs: WalkerLineRef[] } {
   const w = new World({ count, bound, seed });
   const refs: WalkerLineRef[] = w.active.map((walker) => {
-    const positions = new Float32Array(MAX_STEPS * 3);
-    const geom = new THREE.BufferGeometry();
-    const attr = new THREE.BufferAttribute(positions, 3);
-    attr.setUsage(THREE.DynamicDrawUsage);
-    geom.setAttribute("position", attr);
-    geom.setDrawRange(0, 1);
-    attr.setXYZ(0, 0, 0, 0);
-    attr.needsUpdate = true;
+    // Preallocated stride-6 buffer: per segment, [startX, startY, startZ, endX, endY, endZ].
+    const buffer = new Float32Array(MAX_SEGMENTS * 6);
+    const interleaved = new InstancedInterleavedBuffer(buffer, 6, 1);
+    interleaved.setUsage(THREE.DynamicDrawUsage);
+
+    const geom = new LineGeometry();
+    geom.setAttribute("instanceStart", new InterleavedBufferAttribute(interleaved, 3, 0));
+    geom.setAttribute("instanceEnd", new InterleavedBufferAttribute(interleaved, 3, 3));
+    geom.instanceCount = 0;
 
     const mat = makeMaterial(activeWidth, activeOpacity, blendMode);
     applyColorAndGlow(mat, activeColor, activeGlow, blendMode);
 
-    const line = new THREE.Line(geom, mat);
+    const line = new Line2(geom, mat);
     line.frustumCulled = false;
 
     return {
       walker,
       geometry: geom,
-      positionAttr: attr,
       material: mat,
       line,
-      positions,
-      uploadedSteps: 1,
+      buffer,
+      interleaved,
+      uploadedSegments: 0,
       retired: false,
       capped: false,
     };
@@ -100,15 +114,25 @@ function buildWorld(
 
 function flushPositions(l: WalkerLineRef, stepSize: number) {
   const stepsLen = Math.min(l.walker.steps.length, MAX_STEPS);
-  if (stepsLen === l.uploadedSteps) return;
+  const targetSegments = Math.max(0, stepsLen - 1);
+  if (targetSegments === l.uploadedSegments) return;
 
-  for (let i = l.uploadedSteps; i < stepsLen; i++) {
-    const s = l.walker.steps[i];
-    l.positionAttr.setXYZ(i, s[0] * stepSize, s[1] * stepSize, s[2] * stepSize);
+  // If targetSegments < uploadedSegments (after a stepSize-driven reset), rebuild from zero.
+  const startSeg = targetSegments < l.uploadedSegments ? 0 : l.uploadedSegments;
+  for (let i = startSeg; i < targetSegments; i++) {
+    const p0 = l.walker.steps[i];
+    const p1 = l.walker.steps[i + 1];
+    const off = i * 6;
+    l.buffer[off] = p0[0] * stepSize;
+    l.buffer[off + 1] = p0[1] * stepSize;
+    l.buffer[off + 2] = p0[2] * stepSize;
+    l.buffer[off + 3] = p1[0] * stepSize;
+    l.buffer[off + 4] = p1[1] * stepSize;
+    l.buffer[off + 5] = p1[2] * stepSize;
   }
-  l.geometry.setDrawRange(0, stepsLen);
-  l.positionAttr.needsUpdate = true;
-  l.uploadedSteps = stepsLen;
+  l.interleaved.needsUpdate = true;
+  l.geometry.instanceCount = targetSegments;
+  l.uploadedSegments = targetSegments;
 }
 
 export function WalkerSim() {
@@ -124,6 +148,8 @@ export function WalkerSim() {
   const retired = useSimStore((s) => s.retired);
   const blendMode = useSimStore((s) => s.blendMode);
   const setStats = useSimStore((s) => s.setStats);
+
+  const { size } = useThree();
 
   const worldRef = useRef<World | null>(null);
   const linesRef = useRef<WalkerLineRef[]>([]);
@@ -182,6 +208,13 @@ export function WalkerSim() {
     };
   }, [built, setStats]);
 
+  // keep LineMaterial resolution synced to canvas size
+  useEffect(() => {
+    for (const l of linesRef.current) {
+      l.material.resolution.set(size.width || window.innerWidth, size.height || window.innerHeight);
+    }
+  }, [size.width, size.height, built]);
+
   // apply active style live to non-retired walkers
   useEffect(() => {
     for (const l of linesRef.current) {
@@ -226,7 +259,7 @@ export function WalkerSim() {
   // step-size changes need full rebuild of uploaded positions
   useEffect(() => {
     for (const l of linesRef.current) {
-      l.uploadedSteps = 0;
+      l.uploadedSegments = 0;
     }
   }, [stepSize]);
 
