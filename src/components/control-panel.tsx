@@ -28,7 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Dices, Pause, Play } from "lucide-react";
+import { ChevronDown, Dices, Pause, Play, RotateCcw } from "lucide-react";
 
 function toScalar(v: number | readonly number[]): number {
   return Array.isArray(v) ? v[0] : (v as number);
@@ -376,8 +376,14 @@ export function ControlPanel() {
           <Tooltip>
             <TooltipTrigger
               render={
-                <Button variant="outline" onClick={() => reset()} className="flex-1">
-                  Reset
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => reset()}
+                  aria-label="Reset"
+                  className="flex-1"
+                >
+                  <RotateCcw className="size-4" />
                 </Button>
               }
             />
