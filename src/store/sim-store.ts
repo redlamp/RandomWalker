@@ -109,7 +109,7 @@ const DEFAULT_CONFIG: SimConfig = {
   newSeedOnStart: true,
   speed: 1,
   playing: true,
-  showBoundingCube: true,
+  showBoundingCube: false,
   visibility: "all",
   cameraMode: "perspective",
   cameraAutoOrbit: true,
