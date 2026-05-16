@@ -213,7 +213,7 @@ function ColorRow({
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-6 w-8 cursor-pointer border border-border bg-transparent p-0"
+          className="h-6 w-8 cursor-pointer appearance-none border border-border bg-transparent p-0 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-0 [&::-moz-color-swatch]:border-0"
           aria-label={`${label} color picker`}
         />
       </div>
