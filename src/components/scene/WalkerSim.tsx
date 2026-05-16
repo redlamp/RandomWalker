@@ -9,6 +9,7 @@ import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { InstancedInterleavedBuffer, InterleavedBufferAttribute } from "three";
 import { useSimStore, type BlendMode } from "@/store/sim-store";
 import { World, type Walker, type Vec3 } from "@/lib/walker";
+import { playHomeClick } from "@/lib/sfx";
 
 const MAX_STEPS = 16384;
 const MAX_SEGMENTS = MAX_STEPS - 1;
@@ -280,6 +281,8 @@ export function WalkerSim() {
         if (!l.walker.active) {
           l.retired = true;
           l.finalStepCount = l.walker.stepCount;
+          const pos = l.walker.position;
+          const cameHome = !l.capped && pos[0] === 0 && pos[1] === 0 && pos[2] === 0;
           l.material.linewidth = retired.width;
           l.material.opacity = retired.opacity;
           applyColorAndGlow(l.material, retired.color, retired.glow, blendMode);
@@ -291,6 +294,7 @@ export function WalkerSim() {
           if (l.finalStepCount > longestRef.current) {
             longestRef.current = l.finalStepCount;
           }
+          if (cameHome) playHomeClick();
         }
       }
     }
