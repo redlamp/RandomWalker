@@ -6,8 +6,6 @@ import { useSimStore, type GroupStyle, type VisibilityMode } from "@/store/sim-s
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -22,6 +20,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   Tooltip,
   TooltipContent,
@@ -221,49 +225,30 @@ function ColorRow({
   );
 }
 
-function CollapsibleCard({
+function Section({
+  value,
   title,
   icon,
-  defaultOpen = false,
   children,
   rightSlot,
 }: {
+  value: string;
   title: string;
   icon?: React.ReactNode;
-  defaultOpen?: boolean;
   children: React.ReactNode;
   rightSlot?: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   return (
-    <Card size="sm" className="bg-card/60 ring-foreground/15 gap-2 py-2">
-      <Collapsible open={open} onOpenChange={setOpen}>
-        <CollapsibleTrigger
-          render={
-            <button
-              type="button"
-              className="flex w-full items-center justify-between px-3 py-1.5 text-left hover:bg-muted/30 transition-colors"
-            >
-              <CardTitle className="text-xs uppercase tracking-widest flex items-center gap-1.5">
-                {icon}
-                {title}
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                {rightSlot}
-                <span className="font-mono text-xs text-muted-foreground">
-                  {open ? "−" : "+"}
-                </span>
-              </div>
-            </button>
-          }
-        />
-        <CollapsibleContent>
-          <CardContent className="space-y-3 pt-3 border-t border-border/30">
-            {children}
-          </CardContent>
-        </CollapsibleContent>
-      </Collapsible>
-    </Card>
+    <AccordionItem value={value} className="not-last:border-b border-border/30">
+      <AccordionTrigger className="px-3 py-2 text-xs uppercase tracking-widest font-medium hover:no-underline hover:bg-muted/30 transition-colors items-center gap-2">
+        <span className="flex items-center gap-1.5">
+          {icon}
+          {title}
+        </span>
+        {rightSlot && <span className="ml-auto flex items-center">{rightSlot}</span>}
+      </AccordionTrigger>
+      <AccordionContent className="px-3 pt-1 pb-3 space-y-3">{children}</AccordionContent>
+    </AccordionItem>
   );
 }
 
@@ -434,87 +419,90 @@ export function ControlPanel() {
           </ToggleGroup>
         </div>
 
-        <CollapsibleCard title="World" icon={<Globe className="size-3.5" />}>
-          <SliderRow
-            label="Count"
-            value={walkerCount}
-            min={1}
-            max={256}
-            step={1}
-            onChange={(v) => setConfig({ walkerCount: v })}
-          />
-          <SliderRow
-            label="Bound"
-            value={bound}
-            min={4}
-            max={64}
-            step={1}
-            onChange={(v) => setConfig({ bound: v })}
-          />
-          <SliderRow
-            label="Step size"
-            value={stepSize}
-            min={0.25}
-            max={4}
-            step={0.05}
-            format={(v) => v.toFixed(2)}
-            onChange={(v) => setConfig({ stepSize: v })}
-          />
-          <SliderRow
-            label="Speed"
-            value={speed}
-            min={0.1}
-            max={8}
-            step={0.1}
-            format={(v) => `${v.toFixed(1)}×`}
-            onChange={(v) => setConfig({ speed: v })}
-          />
-          <div className="flex items-center justify-between">
-            <Label htmlFor="cube-toggle" className="text-xs text-muted-foreground">
-              Bounding cube
-            </Label>
-            <Switch
-              id="cube-toggle"
-              checked={showBoundingCube}
-              onCheckedChange={(v) => setConfig({ showBoundingCube: v })}
-            />
-          </div>
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <Label className="text-xs text-muted-foreground">Seed</Label>
-            <NumberInput
-              value={seed}
-              min={0}
-              max={1e9}
+        <Accordion multiple className="rounded-lg ring-1 ring-foreground/15 bg-card/40 overflow-hidden">
+          <Section value="world" title="World" icon={<Globe className="size-3.5" />}>
+            <SliderRow
+              label="Count"
+              value={walkerCount}
+              min={1}
+              max={256}
               step={1}
-              onChange={(v) => reset(v)}
-              ariaLabel="Seed"
-              className="w-24"
+              onChange={(v) => setConfig({ walkerCount: v })}
             />
-          </div>
-        </CollapsibleCard>
+            <SliderRow
+              label="Bound"
+              value={bound}
+              min={4}
+              max={64}
+              step={1}
+              onChange={(v) => setConfig({ bound: v })}
+            />
+            <SliderRow
+              label="Step size"
+              value={stepSize}
+              min={0.25}
+              max={4}
+              step={0.05}
+              format={(v) => v.toFixed(2)}
+              onChange={(v) => setConfig({ stepSize: v })}
+            />
+            <SliderRow
+              label="Speed"
+              value={speed}
+              min={0.1}
+              max={8}
+              step={0.1}
+              format={(v) => `${v.toFixed(1)}×`}
+              onChange={(v) => setConfig({ speed: v })}
+            />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="cube-toggle" className="text-xs text-muted-foreground">
+                Bounding cube
+              </Label>
+              <Switch
+                id="cube-toggle"
+                checked={showBoundingCube}
+                onCheckedChange={(v) => setConfig({ showBoundingCube: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <Label className="text-xs text-muted-foreground">Seed</Label>
+              <NumberInput
+                value={seed}
+                min={0}
+                max={1e9}
+                step={1}
+                onChange={(v) => reset(v)}
+                ariaLabel="Seed"
+                className="w-24"
+              />
+            </div>
+          </Section>
 
-        <CollapsibleCard title="Walking" icon={<Footprints className="size-3.5" />}>
-          <GroupStyleBody style={active} setStyle={setActive} />
-        </CollapsibleCard>
+          <Section value="walking" title="Walking" icon={<Footprints className="size-3.5" />}>
+            <GroupStyleBody style={active} setStyle={setActive} />
+          </Section>
 
-        <CollapsibleCard title="Home" icon={<House className="size-3.5" />}>
-          <GroupStyleBody style={retired} setStyle={setRetired} />
-        </CollapsibleCard>
+          <Section value="home" title="Home" icon={<House className="size-3.5" />}>
+            <GroupStyleBody style={retired} setStyle={setRetired} />
+          </Section>
 
-        <CollapsibleCard
-          title="Stats"
-          icon={<ChartColumn className="size-3.5" />}
-          rightSlot={
-            <Badge variant="secondary" className="font-mono tabular-nums">
-              {activeCount}/{retiredCount}
-            </Badge>
-          }
-        >
-          <StatRow label="Walking" value={activeCount} />
-          <StatRow label="Home" value={retiredCount} />
-          <StatRow label="Total steps" value={totalSteps} />
-          <StatRow label="Longest home" value={longestRetiredSteps} />
-        </CollapsibleCard>
+          <Section
+            value="stats"
+            title="Stats"
+            icon={<ChartColumn className="size-3.5" />}
+            rightSlot={
+              <Badge variant="secondary" className="font-mono tabular-nums">
+                {activeCount}/{retiredCount}
+              </Badge>
+            }
+          >
+            <StatRow label="Walking" value={activeCount} />
+            <StatRow label="Home" value={retiredCount} />
+            <StatRow label="Total steps" value={totalSteps} />
+            <StatRow label="Longest home" value={longestRetiredSteps} />
+          </Section>
+        </Accordion>
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
