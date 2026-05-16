@@ -316,6 +316,7 @@ export function ControlPanel() {
   const seed = useSimStore((s) => s.seed);
   const playing = useSimStore((s) => s.playing);
   const showBoundingCube = useSimStore((s) => s.showBoundingCube);
+  const newSeedOnStart = useSimStore((s) => s.newSeedOnStart);
   const visibility = useSimStore((s) => s.visibility);
   const active = useSimStore((s) => s.active);
   const retired = useSimStore((s) => s.retired);
@@ -464,6 +465,16 @@ export function ControlPanel() {
                 id="cube-toggle"
                 checked={showBoundingCube}
                 onCheckedChange={(v) => setConfig({ showBoundingCube: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="new-seed-toggle" className="text-xs text-muted-foreground">
+                New seed on start
+              </Label>
+              <Switch
+                id="new-seed-toggle"
+                checked={newSeedOnStart}
+                onCheckedChange={(v) => setConfig({ newSeedOnStart: v })}
               />
             </div>
             <div className="flex items-center justify-between gap-2 pt-1">
