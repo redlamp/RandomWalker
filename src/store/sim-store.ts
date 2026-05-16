@@ -149,6 +149,7 @@ export const useSimStore = create<SimStore>()(
         playing: state.playing,
         cameraAutoOrbit: state.cameraAutoOrbit,
         showBoundingCube: state.showBoundingCube,
+        cameraMode: state.cameraMode,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) state.setTheme(state.theme);
