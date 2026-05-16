@@ -20,22 +20,29 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
+export interface Segment {
+  from: Vec3;
+  to: Vec3;
+}
+
 export class Walker {
   readonly id: number;
-  readonly steps: Vec3[];
+  position: Vec3;
   lastDir: number;
   active: boolean;
+  stepCount: number;
 
   constructor(id: number) {
     this.id = id;
-    this.steps = [[0, 0, 0]];
+    this.position = [0, 0, 0];
     this.lastDir = -1;
     this.active = true;
+    this.stepCount = 0;
   }
 
-  step(rng: () => number, bound: number): void {
-    if (!this.active) return;
-    const last = this.steps[this.steps.length - 1];
+  step(rng: () => number, bound: number): Segment | null {
+    if (!this.active) return null;
+    const last = this.position;
     const legal: number[] = [];
     for (let i = 0; i < DIRS.length; i++) {
       if (this.lastDir !== -1 && (this.lastDir ^ 1) === i) continue;
@@ -48,16 +55,19 @@ export class Walker {
     }
     if (legal.length === 0) {
       this.active = false;
-      return;
+      return null;
     }
     const idx = legal[Math.floor(rng() * legal.length)];
     const d = DIRS[idx];
+    const from: Vec3 = [last[0], last[1], last[2]];
     const next: Vec3 = [last[0] + d[0], last[1] + d[1], last[2] + d[2]];
-    this.steps.push(next);
+    this.position = next;
     this.lastDir = idx;
+    this.stepCount++;
     if (next[0] === 0 && next[1] === 0 && next[2] === 0) {
       this.active = false;
     }
+    return { from, to: next };
   }
 }
 
@@ -65,6 +75,11 @@ export interface WorldOptions {
   count: number;
   bound: number;
   seed: number;
+}
+
+export interface TickResult {
+  segments: { walker: Walker; from: Vec3; to: Vec3 }[];
+  newlyRetired: Walker[];
 }
 
 export class World {
@@ -82,11 +97,13 @@ export class World {
     this.tickCount = 0;
   }
 
-  tick(): { newlyRetired: Walker[] } {
+  tick(): TickResult {
     const newlyRetired: Walker[] = [];
+    const segments: TickResult["segments"] = [];
     for (let i = this.active.length - 1; i >= 0; i--) {
       const w = this.active[i];
-      w.step(this.rng, this.bound);
+      const seg = w.step(this.rng, this.bound);
+      if (seg) segments.push({ walker: w, from: seg.from, to: seg.to });
       if (!w.active) {
         newlyRetired.push(w);
         this.retired.push(w);
@@ -94,7 +111,7 @@ export class World {
       }
     }
     this.tickCount++;
-    return { newlyRetired };
+    return { segments, newlyRetired };
   }
 
   get done(): boolean {
