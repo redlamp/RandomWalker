@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
@@ -13,6 +14,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Camera } from "lucide-react";
 
 function toScalar(v: number | readonly number[]): number {
   return Array.isArray(v) ? v[0] : (v as number);
@@ -23,6 +25,7 @@ export function CameraPanel() {
   const cameraAutoOrbit = useSimStore((s) => s.cameraAutoOrbit);
   const cameraOrbitSpeed = useSimStore((s) => s.cameraOrbitSpeed);
   const fps = useSimStore((s) => s.fps);
+  const screenshotFn = useSimStore((s) => s.screenshotFn);
   const setConfig = useSimStore((s) => s.setConfig);
 
   const [open, setOpen] = useState(false);
@@ -105,6 +108,16 @@ export function CameraPanel() {
                 disabled={!cameraAutoOrbit}
               />
             </div>
+
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => screenshotFn?.()}
+              disabled={!screenshotFn}
+            >
+              <Camera className="size-4" />
+              Export PNG
+            </Button>
           </CardContent>
         </CollapsibleContent>
       </Collapsible>
