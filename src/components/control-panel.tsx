@@ -239,13 +239,13 @@ function Section({
   rightSlot?: React.ReactNode;
 }) {
   return (
-    <AccordionItem value={value} className="not-last:border-b border-border/30">
-      <AccordionTrigger className="px-3 py-2 text-xs uppercase tracking-widest font-medium hover:no-underline hover:bg-muted/30 transition-colors items-center gap-2">
+    <AccordionItem value={value} className="not-last:border-b border-foreground/15">
+      <AccordionTrigger className="px-3 py-2 text-xs uppercase tracking-widest font-medium hover:no-underline hover:bg-muted/30 transition-colors items-center justify-start gap-2">
         <span className="flex items-center gap-1.5">
           {icon}
           {title}
         </span>
-        {rightSlot && <span className="ml-auto flex items-center">{rightSlot}</span>}
+        {rightSlot && <span className="ml-auto mr-2 flex items-center">{rightSlot}</span>}
       </AccordionTrigger>
       <AccordionContent className="px-3 pt-1 pb-3 space-y-3">{children}</AccordionContent>
     </AccordionItem>
