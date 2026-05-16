@@ -67,6 +67,7 @@ interface SimStore extends SimConfig, SimStats {
   controlPanelOpen: boolean;
   openSections: string[];
   worldDefaults: WorldDefaults | null;
+  hasVisited: boolean;
   setConfig: (patch: Partial<SimConfig>) => void;
   setActive: (patch: Partial<GroupStyle>) => void;
   setRetired: (patch: Partial<GroupStyle>) => void;
@@ -84,6 +85,7 @@ interface SimStore extends SimConfig, SimStats {
   setOpenSections: (sections: string[]) => void;
   resetWorldDefaults: () => void;
   saveCurrentAsWorldDefaults: () => void;
+  setHasVisited: (v: boolean) => void;
 }
 
 const DARK_PRESET = {
@@ -138,6 +140,7 @@ export const useSimStore = create<SimStore>()(
       controlPanelOpen: false,
       openSections: [],
       worldDefaults: null,
+      hasVisited: false,
       setConfig: (patch) => set((s) => ({ ...s, ...patch })),
       setScreenshotFn: (fn) => set({ screenshotFn: fn }),
       setCameraDir: (dir) => set({ cameraDir: dir }),
@@ -195,6 +198,7 @@ export const useSimStore = create<SimStore>()(
             seed: s.seed,
           },
         })),
+      setHasVisited: (v) => set({ hasVisited: v }),
     }),
     {
       name: "random-walker-prefs",
@@ -221,6 +225,7 @@ export const useSimStore = create<SimStore>()(
         openSections: state.openSections,
         worldDefaults: state.worldDefaults,
         audioEnabled: state.audioEnabled,
+        hasVisited: state.hasVisited,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
@@ -232,7 +237,12 @@ export const useSimStore = create<SimStore>()(
         const savedRetired = state.retired;
         state.setTheme(state.theme);
         state.setConfig({ active: savedActive, retired: savedRetired });
-        if (state.newSeedOnStart) {
+        // First-time visitors land on the factory seed (2). Only roll a
+        // fresh seed for returning visitors who have newSeedOnStart on.
+        const firstVisit = !state.hasVisited;
+        if (firstVisit) {
+          state.setHasVisited(true);
+        } else if (state.newSeedOnStart) {
           state.reset(Math.floor(Math.random() * 1e9));
         }
       },
