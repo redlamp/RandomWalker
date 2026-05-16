@@ -28,7 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Sun, Moon, ChevronDown } from "lucide-react";
+import { ChevronDown, Dices } from "lucide-react";
 
 function toScalar(v: number | readonly number[]): number {
   return Array.isArray(v) ? v[0] : (v as number);
@@ -310,7 +310,6 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
 export function ControlPanel() {
   const [panelOpen, setPanelOpen] = useState(false);
   const chevronRef = useRef<SVGSVGElement>(null);
-  const themeIconRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!chevronRef.current) return;
@@ -320,18 +319,6 @@ export function ControlPanel() {
       ease: "power3.out",
     });
   }, [panelOpen]);
-
-  const theme = useSimStore((s) => s.theme);
-  const setTheme = useSimStore((s) => s.setTheme);
-
-  useEffect(() => {
-    if (!themeIconRef.current) return;
-    gsap.fromTo(
-      themeIconRef.current,
-      { rotate: -180, opacity: 0 },
-      { rotate: 0, opacity: 1, duration: 0.35, ease: "power3.out" },
-    );
-  }, [theme]);
 
   const walkerCount = useSimStore((s) => s.walkerCount);
   const bound = useSimStore((s) => s.bound);
@@ -355,48 +342,25 @@ export function ControlPanel() {
   return (
     <Card className="w-80 backdrop-blur-md bg-card/70 border-border/50 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col gap-3 py-3">
       <Collapsible open={panelOpen} onOpenChange={setPanelOpen}>
-        <div className="flex items-center justify-between gap-2 px-3 py-0.5">
-          <h1 className="font-heading text-base font-semibold uppercase leading-snug tracking-widest pl-1">
-            Random Walkers
-          </h1>
-          <div className="flex items-center gap-1">
-            <Badge variant={playing ? "default" : "outline"} className="font-mono">
-              {playing ? "live" : "paused"}
-            </Badge>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7"
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-                  >
-                    <span ref={themeIconRef} className="inline-flex">
-                      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-                    </span>
-                  </Button>
-                }
-              />
-              <TooltipContent>
-                {theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-              </TooltipContent>
-            </Tooltip>
-            <CollapsibleTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7"
-                  aria-label={panelOpen ? "Collapse panel" : "Expand panel"}
-                >
-                  <ChevronDown ref={chevronRef} className="size-4" />
-                </Button>
-              }
-            />
-          </div>
-        </div>
+        <CollapsibleTrigger
+          render={
+            <button
+              type="button"
+              className="flex w-full items-center justify-between gap-2 px-4 py-1 text-left hover:bg-muted/30 transition-colors"
+              aria-label={panelOpen ? "Collapse panel" : "Expand panel"}
+            >
+              <h1 className="font-heading text-base font-semibold uppercase leading-snug tracking-widest">
+                Random Walkers
+              </h1>
+              <div className="flex items-center gap-2">
+                <Badge variant={playing ? "default" : "outline"} className="font-mono">
+                  {playing ? "live" : "paused"}
+                </Badge>
+                <ChevronDown ref={chevronRef} className="size-4 text-muted-foreground" />
+              </div>
+            </button>
+          }
+        />
         <CollapsibleContent>
           <CardContent className="space-y-3 overflow-y-auto pb-1 pt-3 border-t border-border/30">
         <div className="flex gap-2">
@@ -428,7 +392,7 @@ export function ControlPanel() {
                   onClick={() => reset(Math.floor(Math.random() * 1e9))}
                   aria-label="New seed"
                 >
-                  🎲
+                  <Dices className="size-4" />
                 </Button>
               }
             />

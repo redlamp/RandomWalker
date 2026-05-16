@@ -45,6 +45,7 @@ function makeMaterial(width: number, opacity: number, blendMode: BlendMode) {
     transparent: true,
     opacity,
     blending: blendingFor(blendMode),
+    premultipliedAlpha: true,
     depthWrite: false,
     dashed: false,
   });

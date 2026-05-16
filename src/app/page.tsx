@@ -1,5 +1,6 @@
 import { ControlPanel } from "@/components/control-panel";
 import { CameraPanel } from "@/components/camera-panel";
+import { ThemeToggleButton } from "@/components/theme-toggle-button";
 import { RandomWalkerScene } from "@/components/scene/RandomWalkerScene";
 
 export default function Home() {
@@ -10,6 +11,9 @@ export default function Home() {
       </div>
       <div className="absolute top-4 left-4 z-10">
         <ControlPanel />
+      </div>
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggleButton />
       </div>
       <div className="absolute bottom-4 right-4 z-10">
         <CameraPanel />
