@@ -13,14 +13,14 @@ export default function Home() {
       <div className="absolute top-4 left-4 z-10">
         <ControlPanel />
       </div>
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+      <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
         <AudioToggleButton />
         <ThemeToggleButton />
       </div>
-      <div className="absolute bottom-4 right-4 z-10">
+      <div className="absolute bottom-8 right-4 z-10">
         <CameraPanel />
       </div>
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 text-[10px] uppercase tracking-widest text-muted-foreground/70 font-mono">
+      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-10 text-[10px] uppercase tracking-widest text-muted-foreground/70 font-mono">
         Random Walkers · 3D
       </div>
     </main>
