@@ -1,10 +1,13 @@
 "use client";
 
-import { useRef, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useSimStore, type ViewSide } from "@/store/sim-store";
+
+const GIZMO_FPS = 30;
+const GIZMO_INTERVAL_MS = 1000 / GIZMO_FPS;
 
 interface Face {
   side: ViewSide;
@@ -178,10 +181,20 @@ function CubeEdges() {
   );
 }
 
+function GizmoFrameTicker() {
+  const invalidate = useThree((state) => state.invalidate);
+  useEffect(() => {
+    const id = window.setInterval(() => invalidate(), GIZMO_INTERVAL_MS);
+    return () => window.clearInterval(id);
+  }, [invalidate]);
+  return null;
+}
+
 function GizmoScene({ onPick }: { onPick: (side: ViewSide) => void }) {
   const dragTickRef = useRef(0);
   return (
     <>
+      <GizmoFrameTicker />
       <GizmoCameraMirror />
       <GizmoDragControls dragTickRef={dragTickRef} />
       <ambientLight intensity={1} />
@@ -202,6 +215,7 @@ export function CameraGizmo() {
   return (
     <div className="h-28 w-full cursor-grab active:cursor-grabbing">
       <Canvas
+        frameloop="demand"
         camera={{ fov: 35, position: [3, 3, 3], near: 0.1, far: 50 }}
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
