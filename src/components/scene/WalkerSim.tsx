@@ -3,10 +3,22 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { useSimStore } from "@/store/sim-store";
+import { useSimStore, type BlendMode } from "@/store/sim-store";
 import { World, type Walker } from "@/lib/walker";
 
 const MAX_STEPS = 16384;
+
+function blendingFor(mode: BlendMode): THREE.Blending {
+  switch (mode) {
+    case "additive":
+      return THREE.AdditiveBlending;
+    case "multiply":
+      return THREE.MultiplyBlending;
+    case "normal":
+    default:
+      return THREE.NormalBlending;
+  }
+}
 
 interface WalkerLineRef {
   walker: Walker;
@@ -20,20 +32,27 @@ interface WalkerLineRef {
   capped: boolean;
 }
 
-function makeMaterial(width: number, opacity: number) {
+function makeMaterial(width: number, opacity: number, blendMode: BlendMode) {
   return new THREE.LineBasicMaterial({
     color: 0xffffff,
     linewidth: width,
     transparent: true,
     opacity,
-    blending: THREE.AdditiveBlending,
+    blending: blendingFor(blendMode),
     depthWrite: false,
   });
 }
 
-function applyColorAndGlow(material: THREE.LineBasicMaterial, hex: string, glow: number) {
+function applyColorAndGlow(
+  material: THREE.LineBasicMaterial,
+  hex: string,
+  glow: number,
+  blendMode: BlendMode,
+) {
   const c = new THREE.Color(hex);
-  c.multiplyScalar(Math.max(0, glow));
+  if (blendMode === "additive") {
+    c.multiplyScalar(Math.max(0, glow));
+  }
   material.color.copy(c);
 }
 
@@ -45,6 +64,7 @@ function buildWorld(
   activeOpacity: number,
   activeColor: string,
   activeGlow: number,
+  blendMode: BlendMode,
 ): { world: World; refs: WalkerLineRef[] } {
   const w = new World({ count, bound, seed });
   const refs: WalkerLineRef[] = w.active.map((walker) => {
@@ -57,8 +77,8 @@ function buildWorld(
     attr.setXYZ(0, 0, 0, 0);
     attr.needsUpdate = true;
 
-    const mat = makeMaterial(activeWidth, activeOpacity);
-    applyColorAndGlow(mat, activeColor, activeGlow);
+    const mat = makeMaterial(activeWidth, activeOpacity, blendMode);
+    applyColorAndGlow(mat, activeColor, activeGlow, blendMode);
 
     const line = new THREE.Line(geom, mat);
     line.frustumCulled = false;
@@ -102,6 +122,7 @@ export function WalkerSim() {
   const visibility = useSimStore((s) => s.visibility);
   const active = useSimStore((s) => s.active);
   const retired = useSimStore((s) => s.retired);
+  const blendMode = useSimStore((s) => s.blendMode);
   const setStats = useSimStore((s) => s.setStats);
 
   const worldRef = useRef<World | null>(null);
@@ -110,6 +131,7 @@ export function WalkerSim() {
   const longestRef = useRef(0);
   const activeGroupRef = useRef<THREE.Group>(null);
   const retiredGroupRef = useRef<THREE.Group>(null);
+  const lastStatsAt = useRef(0);
 
   const built = useMemo(
     () =>
@@ -121,8 +143,9 @@ export function WalkerSim() {
         active.opacity,
         active.color,
         active.glow,
+        blendMode,
       ),
-    // active.* applied via a separate effect so tweaks don't rebuild the world.
+    // active.* + blendMode applied via separate effects so tweaks don't rebuild the world.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [generation, walkerCount, bound, seed],
   );
@@ -132,6 +155,7 @@ export function WalkerSim() {
     linesRef.current = built.refs;
     frameAccum.current = 0;
     longestRef.current = 0;
+    lastStatsAt.current = 0;
     setStats({
       activeCount: built.world.active.length,
       retiredCount: 0,
@@ -164,10 +188,10 @@ export function WalkerSim() {
       if (l.retired) continue;
       l.material.linewidth = active.width;
       l.material.opacity = active.opacity;
-      applyColorAndGlow(l.material, active.color, active.glow);
+      applyColorAndGlow(l.material, active.color, active.glow, blendMode);
       l.material.needsUpdate = true;
     }
-  }, [active, built]);
+  }, [active, blendMode, built]);
 
   // apply retired style live to retired walkers
   useEffect(() => {
@@ -175,10 +199,19 @@ export function WalkerSim() {
       if (!l.retired) continue;
       l.material.linewidth = retired.width;
       l.material.opacity = retired.opacity;
-      applyColorAndGlow(l.material, retired.color, retired.glow);
+      applyColorAndGlow(l.material, retired.color, retired.glow, blendMode);
       l.material.needsUpdate = true;
     }
-  }, [retired, built]);
+  }, [retired, blendMode, built]);
+
+  // apply blendMode to all walker materials
+  useEffect(() => {
+    const blending = blendingFor(blendMode);
+    for (const l of linesRef.current) {
+      l.material.blending = blending;
+      l.material.needsUpdate = true;
+    }
+  }, [blendMode, built]);
 
   // visibility toggle
   useEffect(() => {
@@ -222,7 +255,7 @@ export function WalkerSim() {
               l.retired = true;
               l.material.linewidth = retired.width;
               l.material.opacity = retired.opacity;
-              applyColorAndGlow(l.material, retired.color, retired.glow);
+              applyColorAndGlow(l.material, retired.color, retired.glow, blendMode);
               l.material.needsUpdate = true;
               if (activeGroupRef.current && retiredGroupRef.current) {
                 activeGroupRef.current.remove(l.line);
@@ -235,14 +268,18 @@ export function WalkerSim() {
           }
         }
 
-        let totalSteps = 0;
-        for (const l of lines) totalSteps += l.walker.steps.length;
-        setStats({
-          activeCount: world.active.length,
-          retiredCount: world.retired.length,
-          totalSteps,
-          longestRetiredSteps: longestRef.current,
-        });
+        const now = performance.now();
+        if (now - lastStatsAt.current > 100) {
+          lastStatsAt.current = now;
+          let totalSteps = 0;
+          for (const l of lines) totalSteps += l.walker.steps.length;
+          setStats({
+            activeCount: world.active.length,
+            retiredCount: world.retired.length,
+            totalSteps,
+            longestRetiredSteps: longestRef.current,
+          });
+        }
       }
     }
 
