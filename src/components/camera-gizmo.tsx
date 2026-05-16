@@ -22,14 +22,14 @@ const FACES: Face[] = [
   { side: "-z", position: [0, 0, -0.51], rotation: [0, Math.PI, 0], color: "#2a4a8a" },
 ];
 
-const HANDLE_OFFSET = 0.95;
+const HANDLE_OFFSET = 0.78;
 const HANDLES: { side: ViewSide; position: [number, number, number]; color: string }[] = [
-  { side: "+x", position: [HANDLE_OFFSET, 0, 0], color: "#ef4f4f" },
-  { side: "-x", position: [-HANDLE_OFFSET, 0, 0], color: "#8a2a2a" },
-  { side: "+y", position: [0, HANDLE_OFFSET, 0], color: "#4fef4f" },
-  { side: "-y", position: [0, -HANDLE_OFFSET, 0], color: "#2a8a2a" },
-  { side: "+z", position: [0, 0, HANDLE_OFFSET], color: "#4f8aef" },
-  { side: "-z", position: [0, 0, -HANDLE_OFFSET], color: "#2a4a8a" },
+  { side: "+x", position: [HANDLE_OFFSET, 0, 0], color: "#ff8080" },
+  { side: "-x", position: [-HANDLE_OFFSET, 0, 0], color: "#d96060" },
+  { side: "+y", position: [0, HANDLE_OFFSET, 0], color: "#80ff80" },
+  { side: "-y", position: [0, -HANDLE_OFFSET, 0], color: "#60d960" },
+  { side: "+z", position: [0, 0, HANDLE_OFFSET], color: "#80b8ff" },
+  { side: "-z", position: [0, 0, -HANDLE_OFFSET], color: "#6090d9" },
 ];
 
 function GizmoCameraMirror() {
@@ -202,7 +202,7 @@ export function CameraGizmo() {
   return (
     <div className="h-28 w-full cursor-grab active:cursor-grabbing">
       <Canvas
-        camera={{ fov: 30, position: [3, 3, 3], near: 0.1, far: 50 }}
+        camera={{ fov: 35, position: [3, 3, 3], near: 0.1, far: 50 }}
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
       >

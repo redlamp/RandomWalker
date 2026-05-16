@@ -36,7 +36,6 @@ export function CameraSync() {
   const bound = useSimStore((s) => s.bound);
   const stepSize = useSimStore((s) => s.stepSize);
 
-  const lastPushed = useRef(0);
   const lastDir = useRef(new THREE.Vector3(0, 0, 0));
   const lastUp = useRef(new THREE.Vector3(0, 1, 0));
 
@@ -55,18 +54,14 @@ export function CameraSync() {
       return;
     }
 
-    const now = performance.now();
-    if (now - lastPushed.current > 120) {
-      lastPushed.current = now;
-      const dir = camera.position.clone().normalize();
-      if (dir.distanceToSquared(lastDir.current) > 1e-5) {
-        lastDir.current.copy(dir);
-        setCameraDir([dir.x, dir.y, dir.z]);
-      }
-      if (camera.up.distanceToSquared(lastUp.current) > 1e-5) {
-        lastUp.current.copy(camera.up);
-        setCameraUp([camera.up.x, camera.up.y, camera.up.z]);
-      }
+    const dir = camera.position.clone().normalize();
+    if (dir.distanceToSquared(lastDir.current) > 1e-6) {
+      lastDir.current.copy(dir);
+      setCameraDir([dir.x, dir.y, dir.z]);
+    }
+    if (camera.up.distanceToSquared(lastUp.current) > 1e-6) {
+      lastUp.current.copy(camera.up);
+      setCameraUp([camera.up.x, camera.up.y, camera.up.z]);
     }
   });
 
