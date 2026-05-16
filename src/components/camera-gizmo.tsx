@@ -26,11 +26,12 @@ const FACES: Face[] = [
 ];
 
 const HANDLE_OFFSET = 0.78;
+const ISO_HANDLE_OFFSET = 1.05;
 const ISO_K = 1 / Math.sqrt(3);
 const ISO_HANDLE: [number, number, number] = [
-  ISO_K * HANDLE_OFFSET,
-  ISO_K * HANDLE_OFFSET,
-  ISO_K * HANDLE_OFFSET,
+  ISO_K * ISO_HANDLE_OFFSET,
+  ISO_K * ISO_HANDLE_OFFSET,
+  ISO_K * ISO_HANDLE_OFFSET,
 ];
 
 const HANDLES: { side: ViewSide; position: [number, number, number]; color: string; radius?: number }[] = [
